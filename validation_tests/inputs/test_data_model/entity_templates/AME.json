@@ -1,0 +1,9 @@
+{
+    "id": null,
+    "type": "AMECO2Sensor",
+    "transport": "MQTT",
+    "explicitAttrs": true,
+    "co2": {
+        "type": "Number"
+    }
+}
