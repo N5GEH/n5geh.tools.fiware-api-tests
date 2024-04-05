@@ -8,9 +8,8 @@ postman_tests:
     services:
         - docker:dind
     variables:
-        DOCKER_HOST: tcp://docker:2375/
+        DOCKER_HOST: tcp://docker:2376
         DOCKER_DRIVER: overlay
-        DOCKER_TLS_CERTDIR: "/certs"
     before_script:
         - docker version
         - docker-compose version
