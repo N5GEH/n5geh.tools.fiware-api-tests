@@ -37,6 +37,8 @@ class TestDataModel(unittest.TestCase):
     def test_data_model(self):
         # 1. load devices from excel table
         devices_df = pd.read_excel("inputs/test_data_model/devices.xlsx")
+
+        # 2. provisioning
         for index, row in devices_df.iterrows():
             _uid = row["ID"]
             device_type = row["sensor_type"]
@@ -44,15 +46,8 @@ class TestDataModel(unittest.TestCase):
             with open(os.path.join(path_input, "entity_templates",
                                    device_type + ".json")) as f:
                 entity_template: dict = json.load(f)
-                entity_template['id'] = _uid
-                entity = ContextEntity(id=entity_template.get('id'),
-                                       type=entity_template.get('type'))
-                for key, value in entity_template.items():
-                    if key == "id" or key == "type":
-                        continue
-                    attrs = ContextAttribute(**{key: value})
-                    entity.add_attributes({key: attrs})
-                # 3. test the connection by sending some data
+                entity_template['id'] = f"{entity_template['type']}:{_uid}"
+                entity = ContextEntity(**entity_template)
                 with self.cb_client:
                     self.cb_client.post_entity(entity)
                     entity_fiware = self.cb_client.get_entity(entity_id=entity.id)
@@ -63,14 +58,34 @@ class TestDataModel(unittest.TestCase):
                                    device_type + ".json")) as f:
                 device_template: dict = json.load(f)
                 device_template['device_id'] = _uid
-                device_template['entity_name'] = _uid
+                device_template['entity_name'] = f"{entity_template['type']}:{_uid}"
                 device = Device(**device_template)
-                # 3. test the connection by sending some data
+                # test the connection
                 with self.iotc:
                     self.iotc.post_device(device=device)
                     device_fiware = self.iotc.get_device(device_id=device.device_id)
                     self.assertEqual(device_fiware.device_id,
                                      device_template.get('device_id'))
+
+        # 3. validate provisioning
+        for device in self.iotc.get_device_list():
+            entity = self.cb_client.get_entity(entity_id=device.entity_name)
+            for attr in device.attributes:
+                entity_attr = entity.get_attribute(attr.name)
+                self.assertEqual(entity_attr.type, attr.type)
+
+    def tearDown(self) -> None:
+        self.fiware_header = FiwareHeader(
+            service=settings.FIWARE_SERVICE,
+            service_path=settings.FIWARE_SERVICEPATH,
+        )
+
+        clear_all(fiware_header=self.fiware_header,
+                  cb_url=settings.CB_URL,
+                  iota_url=settings.IOTA_JSON_URL
+                  )
+        self.iotc.close()
+        self.cb_client.close()
 
 
 if __name__ == "__main__":
