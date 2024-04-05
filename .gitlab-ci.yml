@@ -1,6 +1,9 @@
 stages:
   - postman
 
+services:
+    - docker:20.10.16-dind
+
 postman_tests:
     stage: postman
     image: node:16.13.2
@@ -8,5 +11,8 @@ postman_tests:
         - node --version
         - npm --version
         - npm install -g newman
+        - docker-compose -f docker-compose.yml up -d 
     script:
         - newman run PostmanTests/test_entity_update.postman_collection.json
+    after_script:
+        - docker-compose -f docker-compose.yml down

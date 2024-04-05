@@ -1,0 +1,29 @@
+version: "3.8"
+
+volumes:
+  mongodb: ~
+
+services:
+    mongodb:
+        image: mongo:4.4
+        hostname: mongodb
+        container_name: db-mongo
+        ports:
+            - "27017:27017"
+        volumes:
+            - mongodb:/data
+
+    orion:
+        image: fiware/orion:3.10.1
+        hostname: orion
+        container_name: fiware-orion
+        depends_on:
+            - mongodb
+        expose:
+            - "1026"
+        ports:
+            - "1026:1026"
+        command: 
+          -dbhost mongodb
+          -logLevel DEBUG
+          -logForHumans
