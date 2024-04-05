@@ -1,5 +1,5 @@
 from pydantic import AnyUrl, AnyHttpUrl, Field, AliasChoices
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Union, Optional
 
 
@@ -8,6 +8,7 @@ class TestSettings(BaseSettings):
     Settings for the test case scenarios according to pydantic's documentaion
     https://pydantic-docs.helpmanual.io/usage/settings/
     """
+    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
     LOG_LEVEL: str = Field(default="ERROR",
                            validation_alias=AliasChoices('LOG_LEVEL', 'LOGLEVEL'))
 
