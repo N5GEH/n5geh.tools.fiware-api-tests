@@ -1,8 +1,6 @@
 {
     "id": null,
     "type": "ERSCO2Sensor",
-    "transport": "MQTT",
-    "explicitAttrs": true,
     "co2": {
         "type": "Number"
     }
