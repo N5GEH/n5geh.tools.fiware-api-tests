@@ -19,5 +19,6 @@ postman_tests:
         - npm --version
         - npm install -g newman
     script:
-        - docker-compose -f docker-compose.yml up -d 
+        - docker-compose -f docker-compose.yml up -d
+        - docker ps
         - newman run PostmanTests/test_entity_update.postman_collection.json
