@@ -13,7 +13,7 @@ postman_tests:
     before_script:
         - docker version
         - apk update
-        - apk add --update nodejs nodejs-npm
+        - apk add --update nodejs npm
         - node --version
         - npm --version
         - npm install -g newman
