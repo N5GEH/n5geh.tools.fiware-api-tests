@@ -2,21 +2,20 @@
 stages:
   - postman
 
-variables:
-    DOCKER_HOST: tcp://docker:2375/
-    DOCKER_DRIVER: overlay2
-
 postman_tests:
     stage: postman
     image: docker/compose:latest
     services:
         - docker:dind
+    variables:
+        DOCKER_HOST: tcp://docker:2375/
+        DOCKER_DRIVER: overlay2
     before_script:
         - docker version
         - docker-compose version
-        - node --version
-        - npm --version
-        - npm install -g newman
+        #- node --version
+        #- npm --version
+        #- npm install -g newman
     script:
         - docker-compose -f docker-compose.yml up -d 
         - newman run PostmanTests/test_entity_update.postman_collection.json
