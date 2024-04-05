@@ -4,7 +4,7 @@ stages:
 
 postman_tests:
     stage: postman
-    image: docker/compose:debian-1.29.2
+    image: docker/compose:latest
     services:
         - docker:dind
     variables:
@@ -13,8 +13,8 @@ postman_tests:
     before_script:
         - docker version
         - docker-compose version
-        - sudo apt update
-        - apt install nodejs npm
+        - apk update
+        apk add --update nodejs nodejs-npm
         - node --version
         - npm --version
         - npm install -g newman
