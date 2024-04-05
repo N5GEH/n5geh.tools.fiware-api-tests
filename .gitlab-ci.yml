@@ -4,7 +4,7 @@ stages:
 
 postman_tests:
     stage: postman
-    image: docker/compose:latest
+    image: docker/compose:debian-1.29.2
     services:
         - docker:dind
     variables:
