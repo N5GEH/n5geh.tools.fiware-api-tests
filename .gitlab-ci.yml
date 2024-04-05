@@ -13,6 +13,7 @@ postman_tests:
     before_script:
         - docker version
         - docker-compose version
+        - sudo apt update
         - apt install nodejs npm
         - node --version
         - npm --version
