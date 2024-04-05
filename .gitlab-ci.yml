@@ -14,7 +14,7 @@ postman_tests:
         - docker version
         - docker-compose version
         - apk update
-        apk add --update nodejs nodejs-npm
+        - apk add --update nodejs nodejs-npm
         - node --version
         - npm --version
         - npm install -g newman
