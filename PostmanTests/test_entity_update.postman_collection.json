@@ -789,12 +789,12 @@
 	"variable": [
 		{
 			"key": "protocol",
-			"value": "https",
+			"value": "http",
 			"type": "string"
 		},
 		{
 			"key": "orion",
-			"value": "orion-noauth.iek10-fiware-test.iek.kfa-juelich.de",
+			"value": "localhost:1026",
 			"type": "string"
 		},
 		{
