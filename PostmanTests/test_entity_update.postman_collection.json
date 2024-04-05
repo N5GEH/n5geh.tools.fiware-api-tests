@@ -794,7 +794,7 @@
 		},
 		{
 			"key": "orion",
-			"value": "orion:1026",
+			"value": "fiware-orion:1026",
 			"type": "string"
 		},
 		{
