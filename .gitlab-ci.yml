@@ -13,8 +13,8 @@ postman_tests:
     before_script:
         - docker version
         - docker-compose version
-        - apk update
-        - apk add --update nodejs~=16 npm
+        - sudo apk update
+        - sudo apk add --update nodejs~=16 npm
         - node --version
         - npm --version
         - npm install -g newman
