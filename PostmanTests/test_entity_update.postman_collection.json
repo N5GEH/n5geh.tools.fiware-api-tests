@@ -32,6 +32,16 @@
 						"key": "Content-Type",
 						"value": "application/json",
 						"type": "text"
+					},
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}",
+						"type": "text"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}",
+						"type": "text"
 					}
 				],
 				"body": {
@@ -39,16 +49,15 @@
 					"raw": "{\n  \"actionType\":\"append\",\n  \"entities\":[\n    {\n        \"id\": \"{{first_product_id}}\",\n        \"type\": \"{{product_type}}\",\n        \"name\": { \"type\": \"Text\", \"value\": \"Apples\", \"metadata\": {} },\n        \"offerPrice\": { \"type\": \"Integer\", \"value\": 89, \"metadata\": {} },\n        \"price\": { \"type\": \"Integer\", \"value\": 99, \"metadata\": {} },\n        \"size\": { \"type\": \"Text\", \"value\": \"S\", \"metadata\": {} },\n        \"specialOffer\": { \"type\": \"Boolean\", \"value\": true, \"metadata\": {} }\n    },\n    {\n        \"id\": \"{{second_product_id}}\",\n        \"type\": \"{{product_type}}\",\n        \"name\": { \"type\": \"Text\", \"value\": \"Bananas\", \"metadata\": {} },\n        \"price\": { \"type\": \"Integer\", \"value\": 1099, \"metadata\": {} },\n        \"size\": { \"type\": \"Text\", \"value\": \"M\", \"metadata\": {} }\n    },\n    {\n        \"id\": \"{{third_product_id}}\",\n        \"type\": \"{{product_type}}\",\n        \"name\": { \"type\": \"Text\", \"value\": \"Coconuts\", \"metadata\": {} },\n        \"price\": { \"type\": \"Integer\", \"value\": 1499, \"metadata\": {} },\n        \"size\": { \"type\": \"Text\", \"value\": \"M\", \"metadata\": {} }\n    }\n]\n}"
 				},
 				"url": {
-					"raw": "http://{{orion}}/v2/op/update/",
-					"protocol": "http",
+					"raw": "{{protocol}}://{{orion}}/v2/op/update",
+					"protocol": "{{protocol}}",
 					"host": [
 						"{{orion}}"
 					],
 					"path": [
 						"v2",
 						"op",
-						"update",
-						""
+						"update"
 					]
 				},
 				"description": "This example uses the convenience batch processing endpoint to adds or ammend two **Product** entities and one attribute (`offerPrice`) to the context.\n\n* if the entities already exist - the request will update the attributes of an entity. \n\n* if the entities do not exist, a new entity will be created.\n\n\nBatch processing uses the `/v2/op/update` endpoint with a payload with two attributes:\n* `actionType=append` means we will overwrite existing entities if they exist\n* The `entities` attribute holds an array of entities we wish to create/overwrite.\n\nEach product has a unique `id` following the NGSI-LD  [draft recommendation](https://docbox.etsi.org/ISG/CIM/Open/ISG_CIM_NGSI-LD_API_Draft_for_public_review.pdf)  and has been assigned `type=Product`.\n\n---\nSubsequent request using the same data with the `actionType=append` batch operation  can applied without changing the result beyond the initial application."
@@ -67,7 +76,6 @@
 							"  pm.response.to.have.status(200);",
 							"});",
 							"",
-							"",
 							"pm.test(\"The response data array length must be 3\", function () {",
 							"    responseData = pm.response.json();",
 							"    pm.expect(responseData.length).to.be.equal(3)",
@@ -83,14 +91,25 @@
 			},
 			"request": {
 				"method": "GET",
-				"header": [],
+				"header": [
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}",
+						"type": "text"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}",
+						"type": "text"
+					}
+				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://{{orion}}/v2/entities",
-					"protocol": "http",
+					"raw": "{{protocol}}://{{orion}}/v2/entities",
+					"protocol": "{{protocol}}",
 					"host": [
 						"{{orion}}"
 					],
@@ -113,7 +132,9 @@
 							"  pm.response.to.have.status(204);\r",
 							"});\r",
 							"\r",
-							"pm.sendRequest(\"http://\" + pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), function (err, response) {\r",
+							"pm.sendRequest({url: pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), header: {\"fiware-service\": pm.variables.get(\"fiware_service\"), \"fiware-servicepath\": pm.variables.get(\"fiware_service_path\")}}, function (err, response) {\r",
+							"    console.log(response);\r",
+							"    \r",
 							"    pm.test(\"Checking the price value of the first product\", function () {\r",
 							"        pm.expect(response.json()[\"price\"][\"value\"]).to.be.equal(89);\r",
 							"    });\r",
@@ -130,7 +151,18 @@
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "text/plain"
+						"value": "text/plain",
+						"type": "text"
+					},
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}",
+						"type": "text"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}",
+						"type": "text"
 					}
 				],
 				"body": {
@@ -138,8 +170,8 @@
 					"raw": "89"
 				},
 				"url": {
-					"raw": "http://{{orion}}/v2/entities/{{first_product_id}}/attrs/price/value",
-					"protocol": "http",
+					"raw": "{{protocol}}://{{orion}}/v2/entities/{{first_product_id}}/attrs/price/value",
+					"protocol": "{{protocol}}",
 					"host": [
 						"{{orion}}"
 					],
@@ -168,7 +200,7 @@
 							"  pm.response.to.have.status(204);\r",
 							"});\r",
 							"\r",
-							"pm.sendRequest(\"http://\" + pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), function (err, response) {\r",
+							"pm.sendRequest({url: pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), header: {\"fiware-service\": pm.variables.get(\"fiware_service\"), \"fiware-servicepath\": pm.variables.get(\"fiware_service_path\")}}, function (err, response) {\r",
 							"    pm.test(\"Checking the value of price and name of the first product\", function () {\r",
 							"        pm.expect(response.json()[\"price\"][\"value\"]).to.be.equal(79);\r",
 							"        pm.expect(response.json()[\"name\"][\"value\"]).to.be.equal(\"Ale\");\r",
@@ -186,7 +218,18 @@
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json"
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}",
+						"type": "text"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}",
+						"type": "text"
 					}
 				],
 				"body": {
@@ -194,8 +237,8 @@
 					"raw": " {\n      \"price\":{\"type\":\"Integer\", \"value\": 79},\n      \"name\": {\"type\":\"Text\", \"value\": \"Ale\"}\n}"
 				},
 				"url": {
-					"raw": "http://{{orion}}/v2/entities/{{first_product_id}}/attrs",
-					"protocol": "http",
+					"raw": "{{protocol}}://{{orion}}/v2/entities/{{first_product_id}}/attrs",
+					"protocol": "{{protocol}}",
 					"host": [
 						"{{orion}}"
 					],
@@ -222,7 +265,7 @@
 							"  pm.response.to.have.status(204);\r",
 							"});\r",
 							"\r",
-							"pm.sendRequest(\"http://\" + pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), function (err, response) {\r",
+							"pm.sendRequest({url: pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), header: {\"fiware-service\": pm.variables.get(\"fiware_service\"), \"fiware-servicepath\": pm.variables.get(\"fiware_service_path\")}}, function (err, response) {\r",
 							"    pm.test(\"Checking the price value and type of the first product\", function () {\r",
 							"        pm.expect(response.json()[\"price\"][\"value\"]).to.be.equal(\"79\");\r",
 							"        pm.expect(response.json()[\"price\"][\"type\"]).to.be.equal(\"String\");\r",
@@ -239,7 +282,18 @@
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json"
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}",
+						"type": "text"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}",
+						"type": "text"
 					}
 				],
 				"body": {
@@ -247,8 +301,8 @@
 					"raw": "{\n      \"price\": {\"type\":\"String\", \"value\": \"79\"}\n}"
 				},
 				"url": {
-					"raw": "http://{{orion}}/v2/entities/{{first_product_id}}/attrs",
-					"protocol": "http",
+					"raw": "{{protocol}}://{{orion}}/v2/entities/{{first_product_id}}/attrs",
+					"protocol": "{{protocol}}",
 					"host": [
 						"{{orion}}"
 					],
@@ -275,8 +329,7 @@
 							"  pm.response.to.have.status(204);\r",
 							"});\r",
 							"\r",
-							"\r",
-							"pm.sendRequest(\"http://\" + pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), function (err, response) {\r",
+							"pm.sendRequest({url: pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), header: {\"fiware-service\": pm.variables.get(\"fiware_service\"), \"fiware-servicepath\": pm.variables.get(\"fiware_service_path\")}}, function (err, response) {\r",
 							"    pm.test(\"Checking the value and type of price and name of the first product\", function () {\r",
 							"        pm.expect(response.json()[\"price\"][\"value\"]).to.be.equal(79);\r",
 							"        pm.expect(response.json()[\"price\"][\"type\"]).to.be.equal(\"Number\");\r",
@@ -295,7 +348,18 @@
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json"
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}",
+						"type": "text"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}",
+						"type": "text"
 					}
 				],
 				"body": {
@@ -303,8 +367,8 @@
 					"raw": " {\n      \"price\": {\"value\": 79},\n      \"name\": {\"type\":\"String\", \"value\": \"Ale\"}\n}"
 				},
 				"url": {
-					"raw": "http://{{orion}}/v2/entities/{{first_product_id}}/attrs",
-					"protocol": "http",
+					"raw": "{{protocol}}://{{orion}}/v2/entities/{{first_product_id}}/attrs",
+					"protocol": "{{protocol}}",
 					"host": [
 						"{{orion}}"
 					],
@@ -331,7 +395,7 @@
 							"  pm.response.to.have.status(204);\r",
 							"});\r",
 							"\r",
-							"pm.sendRequest(\"http://\" + pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), function (err, response) {\r",
+							"pm.sendRequest({url: pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), header: {\"fiware-service\": pm.variables.get(\"fiware_service\"), \"fiware-servicepath\": pm.variables.get(\"fiware_service_path\")}}, function (err, response) {\r",
 							"    pm.test(\"Check if specialOffer of the first product got deleted\", function () {\r",
 							"        pm.expect(response.json()[\"specialOffer\"]).to.be.undefined\r",
 							"    });\r",
@@ -344,14 +408,25 @@
 			],
 			"request": {
 				"method": "DELETE",
-				"header": [],
+				"header": [
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}",
+						"type": "text"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}",
+						"type": "text"
+					}
+				],
 				"body": {
 					"mode": "raw",
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://{{orion}}/v2/entities/{{first_product_id}}/attrs/specialOffer",
-					"protocol": "http",
+					"raw": "{{protocol}}://{{orion}}/v2/entities/{{first_product_id}}/attrs/specialOffer",
+					"protocol": "{{protocol}}",
 					"host": [
 						"{{orion}}"
 					],
@@ -379,7 +454,7 @@
 							"  pm.response.to.have.status(204);\r",
 							"});\r",
 							"\r",
-							"pm.sendRequest(\"http://\" + pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), function (err, response) {\r",
+							"pm.sendRequest({url: pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), header: {\"fiware-service\": pm.variables.get(\"fiware_service\"), \"fiware-servicepath\": pm.variables.get(\"fiware_service_path\")}}, function (err, response) {\r",
 							"    pm.test(\"Check if price and name of the first product got deleted\", function () {\r",
 							"        pm.expect(response.json()[\"price\"]).to.be.undefined\r",
 							"        pm.expect(response.json()[\"name\"]).to.be.undefined\r",
@@ -396,7 +471,18 @@
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json"
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}",
+						"type": "text"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}",
+						"type": "text"
 					}
 				],
 				"body": {
@@ -404,8 +490,8 @@
 					"raw": "{\n  \"actionType\":\"delete\",\n  \"entities\":[\n    {\n      \"id\":\"{{first_product_id}}\", \"type\":\"{{product_type}}\",\n      \"price\":{},\n      \"name\": {}\n    }\n  ]\n}"
 				},
 				"url": {
-					"raw": "http://{{orion}}/v2/op/update/",
-					"protocol": "http",
+					"raw": "{{protocol}}://{{orion}}/v2/op/update/",
+					"protocol": "{{protocol}}",
 					"host": [
 						"{{orion}}"
 					],
@@ -432,7 +518,7 @@
 							"  pm.response.to.have.status(204);\r",
 							"});\r",
 							"\r",
-							"pm.sendRequest(\"http://\" + pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), function (err, response) {\r",
+							"pm.sendRequest({url: pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), header: {\"fiware-service\": pm.variables.get(\"fiware_service\"), \"fiware-servicepath\": pm.variables.get(\"fiware_service_path\")}}, function (err, response) {\r",
 							"    pm.test(\"Checking the value and type of specialOffer of the first product\", function () {\r",
 							"        pm.expect(response.json()[\"specialOffer\"][\"value\"]).to.be.equal(true);\r",
 							"        pm.expect(response.json()[\"specialOffer\"][\"type\"]).to.be.equal(\"Boolean\");\r",
@@ -449,7 +535,18 @@
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json"
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}",
+						"type": "text"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}",
+						"type": "text"
 					}
 				],
 				"body": {
@@ -457,8 +554,8 @@
 					"raw": "{\n      \"specialOffer\":{\"value\": true}\n}"
 				},
 				"url": {
-					"raw": "http://{{orion}}/v2/entities/{{first_product_id}}/attrs",
-					"protocol": "http",
+					"raw": "{{protocol}}://{{orion}}/v2/entities/{{first_product_id}}/attrs",
+					"protocol": "{{protocol}}",
 					"host": [
 						"{{orion}}"
 					],
@@ -485,7 +582,7 @@
 							"  pm.response.to.have.status(204);\r",
 							"});\r",
 							"\r",
-							"pm.sendRequest(\"http://\" + pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), function (err, response) {\r",
+							"pm.sendRequest({url: pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), header: {\"fiware-service\": pm.variables.get(\"fiware_service\"), \"fiware-servicepath\": pm.variables.get(\"fiware_service_path\")}}, function (err, response) {\r",
 							"    pm.test(\"Checking the value and type of price and name of the first product\", function () {\r",
 							"        pm.expect(response.json()[\"price\"][\"value\"]).to.be.equal(99);\r",
 							"        pm.expect(response.json()[\"price\"][\"type\"]).to.be.equal(\"Integer\");\r",
@@ -504,7 +601,18 @@
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json"
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}",
+						"type": "text"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}",
+						"type": "text"
 					}
 				],
 				"body": {
@@ -512,8 +620,8 @@
 					"raw": "{\n  \"actionType\":\"append_strict\",\n  \"entities\":[\n    {\n      \"id\":\"{{first_product_id}}\", \"type\":\"{{product_type}}\",\n      \"name\": { \"type\": \"Text\", \"value\": \"Apples\", \"metadata\": {} },\n      \"price\": { \"type\": \"Integer\", \"value\": 99, \"metadata\": {} }\n    }\n  ]\n}"
 				},
 				"url": {
-					"raw": "http://{{orion}}/v2/op/update/",
-					"protocol": "http",
+					"raw": "{{protocol}}://{{orion}}/v2/op/update/",
+					"protocol": "{{protocol}}",
 					"host": [
 						"{{orion}}"
 					],
@@ -540,7 +648,7 @@
 							"  pm.response.to.have.status(204);\r",
 							"});\r",
 							"\r",
-							"pm.sendRequest(\"http://\" + pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), function (err, response) {\r",
+							"pm.sendRequest({url: pm.variables.get(\"orion\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\"), header: {\"fiware-service\": pm.variables.get(\"fiware_service\"), \"fiware-servicepath\": pm.variables.get(\"fiware_service_path\")}}, function (err, response) {\r",
 							"    pm.test(\"Checking the metadata of price and name of the first product\", function () {\r",
 							"        pm.expect(response.json()[\"price\"][\"metadata\"]).to.not.be.empty;\r",
 							"        pm.expect(response.json()[\"name\"][\"metadata\"]).to.not.be.empty;\r",
@@ -557,7 +665,18 @@
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json"
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}",
+						"type": "text"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}",
+						"type": "text"
 					}
 				],
 				"body": {
@@ -565,8 +684,8 @@
 					"raw": "{\n  \"actionType\":\"append\",\n  \"entities\":[\n    {\n      \"id\":\"{{first_product_id}}\", \"type\":\"{{product_type}}\",\n      \"name\": { \"type\": \"Text\", \"value\": \"Apples\", \"metadata\": {\"TimeInstant\": {\n                    \"type\": \"DateTime\",\n                    \"value\": \"2024-04-04T14:08:16.655Z\"}} \n              },\n      \"price\": { \"type\": \"Integer\", \"value\": 99, \"metadata\": {\"TimeInstant\": {\n                    \"type\": \"DateTime\",\n                    \"value\": \"2024-04-04T14:08:16.655Z\"}} \n                }\n    }\n  ]\n}"
 				},
 				"url": {
-					"raw": "http://{{orion}}/v2/op/update/",
-					"protocol": "http",
+					"raw": "{{protocol}}://{{orion}}/v2/op/update/",
+					"protocol": "{{protocol}}",
 					"host": [
 						"{{orion}}"
 					],
@@ -593,8 +712,7 @@
 							"  pm.response.to.have.status(204);\r",
 							"});\r",
 							"\r",
-							"\r",
-							"pm.sendRequest(\"http://\" + pm.variables.get(\"orion\") + \"/v2/entities/\", function (err, response) {\r",
+							"pm.sendRequest({url: pm.variables.get(\"orion\") + \"/v2/entities\", header: {\"fiware-service\": pm.variables.get(\"fiware_service\"), \"fiware-servicepath\": pm.variables.get(\"fiware_service_path\")}}, function (err, response) {\r",
 							"    pm.test(\"Checking if there is no entity anymore\", function () {\r",
 							"        pm.expect(response.json()).to.be.empty;\r",
 							"    });\r",
@@ -610,7 +728,18 @@
 				"header": [
 					{
 						"key": "Content-Type",
-						"value": "application/json"
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}",
+						"type": "text"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}",
+						"type": "text"
 					}
 				],
 				"body": {
@@ -618,8 +747,8 @@
 					"raw": "{\n  \"actionType\":\"delete\",\n  \"entities\":[\n    {\n      \"id\":\"{{first_product_id}}\", \"type\":\"{{product_type}}\"\n    },\n    {\n      \"id\":\"{{second_product_id}}\", \"type\":\"{{product_type}}\"\n    },\n    {\n      \"id\":\"{{third_product_id}}\", \"type\":\"{{product_type}}\"\n    }\n  ]\n}"
 				},
 				"url": {
-					"raw": "http://{{orion}}/v2/op/update/",
-					"protocol": "http",
+					"raw": "{{protocol}}://{{orion}}/v2/op/update/",
+					"protocol": "{{protocol}}",
 					"host": [
 						"{{orion}}"
 					],
@@ -659,8 +788,23 @@
 	],
 	"variable": [
 		{
+			"key": "protocol",
+			"value": "https",
+			"type": "string"
+		},
+		{
 			"key": "orion",
-			"value": "localhost:1026",
+			"value": "orion-noauth.iek10-fiware-test.iek.kfa-juelich.de",
+			"type": "string"
+		},
+		{
+			"key": "fiware_service",
+			"value": "postman_tests",
+			"type": "string"
+		},
+		{
+			"key": "fiware_service_path",
+			"value": "/",
 			"type": "string"
 		},
 		{
