@@ -4,7 +4,7 @@ stages:
 
 postman_tests:
     stage: postman
-    image: docker:20.10.16
+    image: gitlab/dind
     services:
         - docker:20.10.16-dind
     before_script:
