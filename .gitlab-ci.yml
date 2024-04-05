@@ -8,14 +8,16 @@ postman_tests:
     services:
         - docker:dind
     variables:
-        DOCKER_HOST: tcp://docker:2375/
-        DOCKER_DRIVER: overlay2
+        DOCKER_HOST: tcp://docker:2376
+        DOCKER_DRIVER: overlay
+        DOCKER_TLS_CERTDIR: "/certs"
     before_script:
         - docker version
         - docker-compose version
-        #- node --version
-        #- npm --version
-        #- npm install -g newman
+        - apk add --no-cache nodejs npm
+        - node --version
+        - npm --version
+        - npm install -g newman
     script:
         - docker-compose -f docker-compose.yml up -d 
         - newman run PostmanTests/test_entity_update.postman_collection.json
