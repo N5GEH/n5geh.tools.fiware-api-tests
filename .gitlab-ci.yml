@@ -14,7 +14,9 @@ postman_tests:
         - docker version
         - docker-compose version
         - apk update
-        - apk add --update nodejs npm
+        - apk add --no-cache curl
+        - curl -sL https://deb.nodesource.com/setup_16.x | bash -
+        - apk add --no-cache nodejs npm
         - node --version
         - npm --version
         - npm install -g newman
