@@ -1,5 +1,5 @@
-from pydantic import AnyUrl, AnyHttpUrl, Field, AliasChoices, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import AnyUrl, AnyHttpUrl, Field, AliasChoices
+from pydantic_settings import BaseSettings
 from typing import Union, Optional
 
 

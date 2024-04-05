@@ -3,6 +3,8 @@ import os.path
 from filip.clients.ngsi_v2 import ContextBrokerClient, IoTAClient
 from filip.models import FiwareHeader
 import pandas as pd
+from filip.models.ngsi_v2.context import ContextEntity
+
 from settings import settings
 
 
@@ -27,8 +29,14 @@ if __name__ == "__main__":
         # create entity
         with open(os.path.join(path_input, "entity_templates", device_type+".json")) as f:
             entity_template: dict = json.load(f)
+            entity = ContextEntity(**entity_template)
+            # TODO
 
         # create device
         with open(os.path.join(path_input, "device_templates", device_type+".json")) as f:
             device_template: dict = json.load(f)
+            # TODO
 
+    #  todo 2. validate the provisioning with the excel table
+
+    # todo (optional) 3. test the connection by sending some data
