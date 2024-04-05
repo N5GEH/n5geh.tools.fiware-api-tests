@@ -794,7 +794,7 @@
 		},
 		{
 			"key": "orion",
-			"value": "fiware-orion:1026",
+			"value": "localhost:1026",
 			"type": "string"
 		},
 		{
