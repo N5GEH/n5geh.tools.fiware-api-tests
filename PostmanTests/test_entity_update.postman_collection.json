@@ -794,7 +794,7 @@
 		},
 		{
 			"key": "orion",
-			"value": "localhost:1026",
+			"value": "127.0.0.1:1026",
 			"type": "string"
 		},
 		{
