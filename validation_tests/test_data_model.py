@@ -1,12 +1,9 @@
 import unittest
 import json
 import os.path
-from time import sleep
-
 from filip.clients.ngsi_v2 import ContextBrokerClient, IoTAClient
 from filip.models import FiwareHeader
-import pandas as pd
-from filip.models.ngsi_v2.context import ContextEntity, ContextAttribute
+from filip.models.ngsi_v2.context import ContextEntity
 from filip.models.ngsi_v2.iot import Device
 from filip.utils.cleanup import clear_all
 
@@ -34,14 +31,54 @@ class TestDataModel(unittest.TestCase):
         self.iotc = IoTAClient(url=settings.IOTA_JSON_URL,
                                fiware_header=self.fiware_header)
 
+        # device list
+        self.devices_list = [
+            {
+                "ID": "eui-a81758fffe045eea",
+                "sensor_type": "Elsys ERS CO2"
+            },
+            {
+                "ID": "eui-a81758fffe045ef3",
+                "sensor_type": "Elsys ERS CO2"
+            },
+            {
+                "ID": "eui-a81758fffe045eee",
+                "sensor_type": "Elsys ERS CO2"
+            },
+            {
+                "ID": "eui-a81758fffe045f59",
+                "sensor_type": "Elsys ERS CO2"
+            },
+            {
+                "ID": "eui-10ce45fffe007e89",
+                "sensor_type": "AME"
+            },
+            {
+                "ID": "eui-10ce45fffe007e70",
+                "sensor_type": "AME"
+            },
+            {
+                "ID": "eui-10ce45fffe007e6e",
+                "sensor_type": "AME"
+            },
+            {
+                "ID": "eui-10ce45fffe007e6c",
+                "sensor_type": "AME"
+            },
+            {
+                "ID": "eui-0018b2400001a3fb",
+                "sensor_type": "Adeunis modbus"
+            }
+        ]
+
     def test_data_model(self):
         # 1. load devices from excel table
-        devices_df = pd.read_excel("inputs/test_data_model/devices.xlsx")
+        pass
 
         # 2. provisioning
-        for index, row in devices_df.iterrows():
-            _uid = row["ID"]
-            device_type = row["sensor_type"]
+        for device_item in self.devices_list:
+            _uid = device_item["ID"]
+            device_type = device_item["sensor_type"]
             # create entity
             with open(os.path.join(path_input, "entity_templates",
                                    device_type + ".json")) as f:
