@@ -71,7 +71,7 @@ class TestDataModel(unittest.TestCase):
             }
         ]
 
-    def test_data_model(self):
+    def test_data_model_provision(self):
         # 1. load devices from excel table
         pass
 
@@ -110,6 +110,18 @@ class TestDataModel(unittest.TestCase):
             for attr in device.attributes:
                 entity_attr = entity.get_attribute(attr.name)
                 self.assertEqual(entity_attr.type, attr.type)
+
+    def test_append_attribute(self):
+        pass
+
+    def test_delete_attribute(self):
+        pass
+
+    def test_rename_attribute(self):
+        pass
+
+    def test_anonymous_update(self):
+        pass
 
     def tearDown(self) -> None:
         self.fiware_header = FiwareHeader(
