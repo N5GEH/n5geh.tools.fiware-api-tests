@@ -56,7 +56,7 @@ standard_service_group = {
 }
 
 
-def standard_test(*,
+def standard_test(
                   fiware_service: str,
                   fiware_servicepath: str,
                   cb_url: str = None,
@@ -295,10 +295,6 @@ class TestDataModel(unittest.TestCase):
             service=settings.FIWARE_SERVICE,
             service_path=settings.FIWARE_SERVICEPATH,
         )
-        clear_all(fiware_header=self.fiware_header,
-                  cb_url=settings.CB_URL,
-                  iota_url=settings.IOTA_JSON_URL
-                  )
         self.iotc.close()
         self.cb_client.close()
 
