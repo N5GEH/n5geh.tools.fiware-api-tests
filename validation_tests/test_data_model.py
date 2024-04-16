@@ -363,6 +363,11 @@ class TestDataModel(unittest.TestCase):
                              attr_name=new_attribute_name
                          ))
 
+    @standard_test(
+        fiware_service=settings.FIWARE_SERVICE,
+        fiware_servicepath=settings.FIWARE_SERVICEPATH,
+        cb_url=settings.CB_URL,
+        iota_url=settings.IOTA_JSON_URL)
     def test_anonymous_update(self):
         """
         Anonymous attributes getting updated
