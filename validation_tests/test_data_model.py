@@ -257,28 +257,111 @@ class TestDataModel(unittest.TestCase):
                              attr_name=new_attribute_name
                          ))
 
+    @standard_test(
+        fiware_service=settings.FIWARE_SERVICE,
+        fiware_servicepath=settings.FIWARE_SERVICEPATH,
+        cb_url=settings.CB_URL,
+        iota_url=settings.IOTA_JSON_URL)
     def test_delete_attribute(self):
         """
         Attributes are deleted
         :return:
         """
         # delete attributes in IoTAgent
-        # test sending, should fail
-        # test fetching, attribute should be found
-        # delete attributes in CB
-        # test fetching, attribute should not be found
-        pass
+        attribute_name_to_delete = "attribute1"
+        device = self.iotc.get_device(device_id=standard_device["device_id"])
+        # TODO
+        device.remove_attribute(attribute_name_to_delete)
+        self.iotc.update_device(device=device)
+        time.sleep(0.5)
 
+        # test sending, should fail
+        topic = f"/json/{standard_service_group['apikey']}/{standard_device['device_id']}/attrs"
+        deleted_value = 42
+        self.mqttc.publish(topic=topic,
+                           payload=json.dumps({"attribute_to_delete": deleted_value}))
+        time.sleep(0.5)
+        self.assertNotEqual(deleted_value,
+                            self.cb_client.get_attribute_value(
+                                entity_id=standard_entity["id"],
+                                entity_type=standard_entity["type"],
+                                attr_name=attribute_name_to_delete
+                            ))
+
+        # test fetching, attribute should be found
+        self.assertIsNotNone(self.cb_client.get_attribute_value(
+            entity_id=standard_entity["id"],
+            entity_type=standard_entity["type"],
+            attr_name=attribute_name_to_delete
+        ))
+
+        # delete attributes in CB
+        self.cb_client.delete_entity_attribute(
+            entity_id=standard_entity["id"],
+            entity_type=standard_entity["type"],
+            attr_name=attribute_name_to_delete
+        )
+
+        # test fetching, attribute should not be found
+        self.assertIsNone(self.cb_client.get_attribute_value(
+            entity_id=standard_entity["id"],
+            entity_type=standard_entity["type"],
+            attr_name=attribute_name_to_delete
+        ))
+
+    @standard_test(
+        fiware_service=settings.FIWARE_SERVICE,
+        fiware_servicepath=settings.FIWARE_SERVICEPATH,
+        cb_url=settings.CB_URL,
+        iota_url=settings.IOTA_JSON_URL)
     def test_rename_attribute(self):
         """
         Attributes are renamed
         :return:
         """
         # rename attributes in IoTAgent
+        old_attribute_name = "old_attribute"
+        new_attribute_name = "new_attribute"
+        device = self.iotc.get_device(device_id=standard_device["device_id"])
+        device.rename_attribute(old_attribute_name, new_attribute_name)
+        self.iotc.update_device(device=device)
+        time.sleep(0.5)
+
         # test sending, and fetching with new name, should fail
+        topic = f"/json/{standard_service_group['apikey']}/{standard_device['device_id']}/attrs"
+        value_to_send = 55
+        self.mqttc.publish(topic=topic,
+                           payload=json.dumps({new_attribute_name: value_to_send}))
+        time.sleep(0.5)
+        self.assertNotEqual(value_to_send,
+                            self.cb_client.get_attribute_value(
+                                entity_id=standard_entity["id"],
+                                entity_type=standard_entity["type"],
+                                attr_name=new_attribute_name
+                            ))
+
         # append new attribute in CB
+        self.cb_client.update_or_append_entity_attributes(
+            entity_id=standard_entity["id"],
+            entity_type=standard_entity["type"],
+            attrs=[
+                NamedContextAttribute(**{
+                    "name": new_attribute_name,
+                    "type": "Number",
+                    "value": 0})],
+            append_strict=True)
+        time.sleep(0.5)
+
         # test sending and fetching again, should work
-        pass
+        self.mqttc.publish(topic=topic,
+                           payload=json.dumps({new_attribute_name: value_to_send}))
+        time.sleep(0.5)
+        self.assertEqual(value_to_send,
+                         self.cb_client.get_attribute_value(
+                             entity_id=standard_entity["id"],
+                             entity_type=standard_entity["type"],
+                             attr_name=new_attribute_name
+                         ))
 
     def test_anonymous_update(self):
         """
@@ -286,9 +369,41 @@ class TestDataModel(unittest.TestCase):
         :return:
         """
         # test sending anonymous attributes, and fetching, should fail
+        topic = f"/json/{standard_service_group['apikey']}/{standard_device['device_id']}/attrs"
+        anonymous_attribute = "anonymous_attribute"
+        anonymous_value = 77
+        self.mqttc.publish(topic=topic,
+                           payload=json.dumps({anonymous_attribute: anonymous_value}))
+        time.sleep(0.5)
+        self.assertNotEqual(anonymous_value,
+                            self.cb_client.get_attribute_value(
+                                entity_id=standard_entity["id"],
+                                entity_type=standard_entity["type"],
+                                attr_name=anonymous_attribute
+                            ))
+
         # append new attribute in CB
+        self.cb_client.update_or_append_entity_attributes(
+            entity_id=standard_entity["id"],
+            entity_type=standard_entity["type"],
+            attrs=[
+                NamedContextAttribute(**{
+                    "name": anonymous_attribute,
+                    "type": "Number",
+                    "value": 0})],
+            append_strict=True)
+        time.sleep(0.5)
+
         # test sending and fetching again, should work
-        pass
+        self.mqttc.publish(topic=topic,
+                           payload=json.dumps({anonymous_attribute: anonymous_value}))
+        time.sleep(0.5)
+        self.assertEqual(anonymous_value,
+                         self.cb_client.get_attribute_value(
+                             entity_id=standard_entity["id"],
+                             entity_type=standard_entity["type"],
+                             attr_name=anonymous_attribute
+                         ))
 
     def tearDown(self) -> None:
         self.fiware_header = FiwareHeader(
