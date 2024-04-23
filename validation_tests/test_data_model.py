@@ -26,6 +26,14 @@ standard_entity = {
     "attribute2": {
         "type": "Number",
         "value": 2
+    },
+    "attribute3": {
+        "type": "Number",
+        "value": 3
+    },
+    "attribute4": {
+        "type": "Number",
+        "value": 4
     }
 }
 
@@ -45,6 +53,16 @@ standard_device = {
             "name": "attribute2",
             "type": "Number",
             "object_id": "a2"
+        },
+        {
+            "name": "attribute3",
+            "type": "Number",
+            "object_id": "a3"
+        },
+        {
+            "name": "attribute4",
+            "type": "Number",
+            "object_id": "a4"
         }
     ]
 }
@@ -82,7 +100,7 @@ def standard_test(
     try:
         with IoTAClient(url=iota_url, fiware_header=fiware_header) as iotac:
             iotac.post_group(service_group=service_group)
-    except:
+    except HTTPError: # In case of Conflict error
         pass
 
     # initial device
@@ -210,25 +228,47 @@ class TestDataModel(unittest.TestCase):
         fiware_servicepath=settings.FIWARE_SERVICEPATH,
         cb_url=settings.CB_URL,
         iota_url=settings.IOTA_JSON_URL)
+    def test_existing_attribute(self):
+        """
+        Existing attributes
+        """
+        existing_attribute = "attribute1"
+        topic = f"/json/{standard_service_group['apikey']}/{standard_device['device_id']}/attrs"
+        new_value = 11
+        self.mqttc.publish(topic=topic, payload=json.dumps({existing_attribute: new_value}))
+        time.sleep(0.5)
+        self.assertEqual(new_value,
+                            self.cb_client.get_attribute_value(
+                                entity_id=standard_entity["id"],
+                                entity_type=standard_entity["type"],
+                                attr_name=existing_attribute
+                            ))
+
+    @standard_test(
+        fiware_service=settings.FIWARE_SERVICE,
+        fiware_servicepath=settings.FIWARE_SERVICEPATH,
+        cb_url=settings.CB_URL,
+        iota_url=settings.IOTA_JSON_URL)
     def test_append_attribute(self):
         """
-        New attributes are appended
+        New attributes are appended, this does not work with IoTA version 1.19.0, the updated attribute values are
+        not posted to Context Broker when sending via MQTT
         """
         # append attributes in CB
-        new_attribute_name = "attribute3"
+        new_attribute_name = "attribute5"
         self.cb_client.update_or_append_entity_attributes(
             entity_id=standard_entity["id"],
             entity_type=standard_entity["type"],
             attrs=[
                 NamedContextAttribute(**{
-                    "name": "attribute3",
+                    "name": new_attribute_name,
                     "type": "Number",
-                    "value": 3})],
+                    "value": 5})],
             append_strict=True)
         # test sending, and fetching, should fail
         topic = f"/json/{standard_service_group['apikey']}/{standard_device['device_id']}/attrs"
-        new_value = 33
-        self.mqttc.publish(topic=topic, payload=json.dumps({"attribute3": new_value}))
+        new_value = 55
+        self.mqttc.publish(topic=topic, payload=json.dumps({new_attribute_name: new_value}))
         time.sleep(0.5)
         self.assertNotEqual(new_value,
                             self.cb_client.get_attribute_value(
@@ -252,7 +292,7 @@ class TestDataModel(unittest.TestCase):
         time.sleep(0.5)
 
         # test sending again, should work
-        self.mqttc.publish(topic=topic, payload=json.dumps({"attribute3": new_value}))
+        self.mqttc.publish(topic=topic, payload=json.dumps({new_attribute_name: new_value}))
         time.sleep(0.5)
         self.assertEqual(new_value,
                          self.cb_client.get_attribute_value(
@@ -272,7 +312,7 @@ class TestDataModel(unittest.TestCase):
         :return:
         """
         # delete attributes in IoTAgent
-        attribute_name_to_delete = "attribute1"
+        attribute_name_to_delete = "attribute3"
         device = self.iotc.get_device(device_id=standard_device["device_id"])
         # TODO
         device.delete_attribute(device.get_attribute(attribute_name_to_delete))
@@ -283,7 +323,7 @@ class TestDataModel(unittest.TestCase):
         topic = f"/json/{standard_service_group['apikey']}/{standard_device['device_id']}/attrs"
         deleted_value = 42
         self.mqttc.publish(topic=topic,
-                           payload=json.dumps({"attribute_to_delete": deleted_value}))
+                           payload=json.dumps({attribute_name_to_delete: deleted_value}))
         time.sleep(0.5)
         self.assertNotEqual(deleted_value,
                             self.cb_client.get_attribute_value(
@@ -324,7 +364,7 @@ class TestDataModel(unittest.TestCase):
         :return:
         """
         # rename attributes in CB
-        old_attribute_name = "attribute2"
+        old_attribute_name = "attribute4"
         new_attribute_name = "new_attribute"
         self.cb_client.update_or_append_entity_attributes(
             entity_id=standard_entity["id"],
@@ -339,7 +379,7 @@ class TestDataModel(unittest.TestCase):
 
         # test sending, and fetching with new name, should fail
         topic = f"/json/{standard_service_group['apikey']}/{standard_device['device_id']}/attrs"
-        value_to_send = 55
+        value_to_send = 44
         self.mqttc.publish(topic=topic,
                            payload=json.dumps({new_attribute_name: value_to_send}))
         time.sleep(0.5)
