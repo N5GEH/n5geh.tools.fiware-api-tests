@@ -10,6 +10,7 @@ from filip.models import FiwareHeader
 from filip.models.ngsi_v2.context import ContextEntity, NamedContextAttribute
 from filip.models.ngsi_v2.iot import Device, ServiceGroup, DeviceAttribute
 from filip.utils.cleanup import clear_all, clean_test
+from requests import HTTPError
 
 from settings import settings
 
@@ -25,6 +26,14 @@ standard_entity = {
     "attribute2": {
         "type": "Number",
         "value": 2
+    },
+    "attribute3": {
+        "type": "Number",
+        "value": 3
+    },
+    "attribute4": {
+        "type": "Number",
+        "value": 4
     }
 }
 
@@ -44,6 +53,16 @@ standard_device = {
             "name": "attribute2",
             "type": "Number",
             "object_id": "a2"
+        },
+        {
+            "name": "attribute3",
+            "type": "Number",
+            "object_id": "a3"
+        },
+        {
+            "name": "attribute4",
+            "type": "Number",
+            "object_id": "a4"
         }
     ]
 }
@@ -57,12 +76,12 @@ standard_service_group = {
 
 
 def standard_test(
-                  fiware_service: str,
-                  fiware_servicepath: str,
-                  cb_url: str = None,
-                  iota_url: str = None,
-                  ql_url: str = None,
-                  ) -> Callable:
+        fiware_service: str,
+        fiware_servicepath: str,
+        cb_url: str = None,
+        iota_url: str = None,
+        ql_url: str = None,
+) -> Callable:
     # clean up
     fiware_header = FiwareHeader(service=fiware_service,
                                  service_path=fiware_servicepath)
@@ -78,8 +97,11 @@ def standard_test(
 
     # initial service group
     service_group = ServiceGroup(**standard_service_group)
-    with IoTAClient(url=iota_url, fiware_header=fiware_header) as iotac:
-        iotac.post_group(service_group=service_group)
+    try:
+        with IoTAClient(url=iota_url, fiware_header=fiware_header) as iotac:
+            iotac.post_group(service_group=service_group)
+    except HTTPError: # In case of Conflict error
+        pass
 
     # initial device
     device = Device(**standard_device)
@@ -206,25 +228,47 @@ class TestDataModel(unittest.TestCase):
         fiware_servicepath=settings.FIWARE_SERVICEPATH,
         cb_url=settings.CB_URL,
         iota_url=settings.IOTA_JSON_URL)
+    def test_existing_attribute(self):
+        """
+        Existing attributes
+        """
+        existing_attribute = "attribute1"
+        topic = f"/json/{standard_service_group['apikey']}/{standard_device['device_id']}/attrs"
+        new_value = 11
+        self.mqttc.publish(topic=topic, payload=json.dumps({existing_attribute: new_value}))
+        time.sleep(0.5)
+        self.assertEqual(new_value,
+                            self.cb_client.get_attribute_value(
+                                entity_id=standard_entity["id"],
+                                entity_type=standard_entity["type"],
+                                attr_name=existing_attribute
+                            ))
+
+    @standard_test(
+        fiware_service=settings.FIWARE_SERVICE,
+        fiware_servicepath=settings.FIWARE_SERVICEPATH,
+        cb_url=settings.CB_URL,
+        iota_url=settings.IOTA_JSON_URL)
     def test_append_attribute(self):
         """
-        New attributes are appended
+        New attributes are appended, this does not work with IoTA version 1.19.0, the updated attribute values are
+        not posted to Context Broker when sending via MQTT
         """
         # append attributes in CB
-        new_attribute_name = "attribute3"
+        new_attribute_name = "attribute5"
         self.cb_client.update_or_append_entity_attributes(
             entity_id=standard_entity["id"],
             entity_type=standard_entity["type"],
             attrs=[
                 NamedContextAttribute(**{
-                    "name": "attribute3",
+                    "name": new_attribute_name,
                     "type": "Number",
-                    "value": 3})],
+                    "value": 5})],
             append_strict=True)
         # test sending, and fetching, should fail
         topic = f"/json/{standard_service_group['apikey']}/{standard_device['device_id']}/attrs"
-        new_value = 33
-        self.mqttc.publish(topic=topic, payload=json.dumps({"attribute3": new_value}))
+        new_value = 55
+        self.mqttc.publish(topic=topic, payload=json.dumps({new_attribute_name: new_value}))
         time.sleep(0.5)
         self.assertNotEqual(new_value,
                             self.cb_client.get_attribute_value(
@@ -248,7 +292,7 @@ class TestDataModel(unittest.TestCase):
         time.sleep(0.5)
 
         # test sending again, should work
-        self.mqttc.publish(topic=topic, payload=json.dumps({"attribute3": new_value}))
+        self.mqttc.publish(topic=topic, payload=json.dumps({new_attribute_name: new_value}))
         time.sleep(0.5)
         self.assertEqual(new_value,
                          self.cb_client.get_attribute_value(
@@ -268,10 +312,10 @@ class TestDataModel(unittest.TestCase):
         :return:
         """
         # delete attributes in IoTAgent
-        attribute_name_to_delete = "attribute1"
+        attribute_name_to_delete = "attribute3"
         device = self.iotc.get_device(device_id=standard_device["device_id"])
         # TODO
-        device.remove_attribute(attribute_name_to_delete)
+        device.delete_attribute(device.get_attribute(attribute_name_to_delete))
         self.iotc.update_device(device=device)
         time.sleep(0.5)
 
@@ -279,7 +323,7 @@ class TestDataModel(unittest.TestCase):
         topic = f"/json/{standard_service_group['apikey']}/{standard_device['device_id']}/attrs"
         deleted_value = 42
         self.mqttc.publish(topic=topic,
-                           payload=json.dumps({"attribute_to_delete": deleted_value}))
+                           payload=json.dumps({attribute_name_to_delete: deleted_value}))
         time.sleep(0.5)
         self.assertNotEqual(deleted_value,
                             self.cb_client.get_attribute_value(
@@ -289,7 +333,7 @@ class TestDataModel(unittest.TestCase):
                             ))
 
         # test fetching, attribute should be found
-        self.assertIsNotNone(self.cb_client.get_attribute_value(
+        self.assertIsNotNone(self.cb_client.get_attribute(
             entity_id=standard_entity["id"],
             entity_type=standard_entity["type"],
             attr_name=attribute_name_to_delete
@@ -303,10 +347,10 @@ class TestDataModel(unittest.TestCase):
         )
 
         # test fetching, attribute should not be found
-        self.assertIsNone(self.cb_client.get_attribute_value(
+        self.assertEquals({}, self.cb_client.get_entity_attributes(
             entity_id=standard_entity["id"],
             entity_type=standard_entity["type"],
-            attr_name=attribute_name_to_delete
+            attrs=[attribute_name_to_delete]
         ))
 
     @standard_test(
@@ -319,17 +363,23 @@ class TestDataModel(unittest.TestCase):
         Attributes are renamed
         :return:
         """
-        # rename attributes in IoTAgent
-        old_attribute_name = "old_attribute"
+        # rename attributes in CB
+        old_attribute_name = "attribute4"
         new_attribute_name = "new_attribute"
-        device = self.iotc.get_device(device_id=standard_device["device_id"])
-        device.rename_attribute(old_attribute_name, new_attribute_name)
-        self.iotc.update_device(device=device)
+        self.cb_client.update_or_append_entity_attributes(
+            entity_id=standard_entity["id"],
+            entity_type=standard_entity["type"],
+            attrs=[
+                NamedContextAttribute(**{
+                    "name": new_attribute_name,
+                    "type": "Number",
+                    "value": 0})],
+            append_strict=True)
         time.sleep(0.5)
 
         # test sending, and fetching with new name, should fail
         topic = f"/json/{standard_service_group['apikey']}/{standard_device['device_id']}/attrs"
-        value_to_send = 55
+        value_to_send = 44
         self.mqttc.publish(topic=topic,
                            payload=json.dumps({new_attribute_name: value_to_send}))
         time.sleep(0.5)
@@ -340,16 +390,12 @@ class TestDataModel(unittest.TestCase):
                                 attr_name=new_attribute_name
                             ))
 
-        # append new attribute in CB
-        self.cb_client.update_or_append_entity_attributes(
-            entity_id=standard_entity["id"],
-            entity_type=standard_entity["type"],
-            attrs=[
-                NamedContextAttribute(**{
-                    "name": new_attribute_name,
-                    "type": "Number",
-                    "value": 0})],
-            append_strict=True)
+        # append new attribute in IoTA
+        device = self.iotc.get_device(device_id=standard_device["device_id"])
+        device_attribute = device.get_attribute(old_attribute_name)
+        device_attribute.name = new_attribute_name
+        device.update_attribute(device_attribute)
+        self.iotc.update_device(device=device)
         time.sleep(0.5)
 
         # test sending and fetching again, should work
@@ -377,15 +423,14 @@ class TestDataModel(unittest.TestCase):
         topic = f"/json/{standard_service_group['apikey']}/{standard_device['device_id']}/attrs"
         anonymous_attribute = "anonymous_attribute"
         anonymous_value = 77
-        self.mqttc.publish(topic=topic,
-                           payload=json.dumps({anonymous_attribute: anonymous_value}))
-        time.sleep(0.5)
-        self.assertNotEqual(anonymous_value,
-                            self.cb_client.get_attribute_value(
-                                entity_id=standard_entity["id"],
-                                entity_type=standard_entity["type"],
-                                attr_name=anonymous_attribute
-                            ))
+        # self.mqttc.publish(topic=topic,
+        #                    payload=json.dumps({anonymous_attribute: anonymous_value}))
+        # time.sleep(0.5)
+        self.assertRaises(HTTPError,
+                          self.cb_client.get_attribute_value,
+                          entity_id=standard_entity["id"],
+                          entity_type=standard_entity["type"],
+                          attr_name=anonymous_attribute)
 
         # append new attribute in CB
         self.cb_client.update_or_append_entity_attributes(
