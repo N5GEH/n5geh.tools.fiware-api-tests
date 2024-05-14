@@ -24,6 +24,7 @@ topic_payload = "custom/mqtt/notification/payload"
 topic_json = "custom/mqtt/notification/json"
 topic_ngsi = "custom/mqtt/notification/ngsi"
 topic_dynamic = "custom/mqtt/notification/dynamic/#"
+topic_dynamic_multiple = "custom/mqtt/notification/dynamic/multiple/#"
 topics = [topic_default, topic_auth, topic_payload, topic_json, topic_ngsi, topic_dynamic]
 
 standard_entity = {
