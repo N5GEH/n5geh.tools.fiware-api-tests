@@ -24,8 +24,7 @@ topic_auth = "default/mqtt/notification/auth"
 topic_payload = "custom/mqtt/notification/payload"
 topic_json = "custom/mqtt/notification/json"
 topic_ngsi = "custom/mqtt/notification/ngsi"
-topic_dynamic = "custom/mqtt/notification/dynamic/#"
-topic_dynamic_multiple = "custom/mqtt/notification/dynamic/multiple/#"
+topic_dynamic = "custom/mqtt/notification/dynamic"
 topics = [topic_default, topic_auth, topic_payload, topic_json, topic_ngsi, topic_dynamic]
 
 standard_entity = {
@@ -202,7 +201,6 @@ class TestDataModel(unittest.TestCase):
         self.assertEqual(expected_payload["data"][0]["attribute1"]["value"], 102)
         mqttc.loop_stop()
         mqttc.disconnect()
-
 
 # test custom notification with payload
 # topic = "custom/mqtt/notification/payload"
@@ -388,6 +386,58 @@ class TestDataModel(unittest.TestCase):
 # test custom notification with dynamic topic
 # more entities
 # topic = "custom/mqtt/notification/dynamic/#"
+    @standard_test(
+        fiware_service=settings.FIWARE_SERVICE,
+        fiware_servicepath=settings.FIWARE_SERVICEPATH,
+        cb_url=settings.CB_URL
+    )
+    def test_custom_notification_dynamic_topic(self):
+        # create entities
+        for i in range(3):
+            standard_entity["id"] = f"Entity:{i}"
+            standard_entity["type"] = f"Type{i}"
+            self.cb_client.post_entity(ContextEntity(**standard_entity))
+        # post notification
+        notification_custom_mqtt_dynamic_topic = {
+          "description": "MQTT Command notification",
+          "subject": {
+            "entities": [
+              {
+                "idPattern": ".*"
+              }
+            ],
+            "condition": {
+                "attrs": ["attribute1"]
+            }
+          },
+          "notification": {
+            "mqttCustom": {
+              "url": settings.MQTT_BROKER_URL_INTERNAL,
+              "topic": topic_dynamic + "/${type}" + "/${id}",
+            }
+          },
+          "throttling": 0
+        }
+        self.cb_client.post_subscription(subscription=Subscription(
+            **notification_custom_mqtt_dynamic_topic))
+
+        # update value
+        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL_INTERNAL.host,
+                                         port=settings.MQTT_BROKER_URL_INTERNAL.port,
+                                         topic=topic_dynamic+"/#")
+        time.sleep(1)
+        for i in range(3):
+            self.cb_client.update_attribute_value(entity_id=f"Entity:{i}",
+                                                  attr_name="attribute1", value=106)
+            time.sleep(1)
+            # check value
+            self.assertEqual(sub_res["topic"], topic_dynamic+f"/Type{i}"+f"/Entity:{i}")
+            expected_payload = json.loads(sub_res["payload"].decode())
+            self.assertEqual(expected_payload["data"][0]["id"], f"Entity:{i}")
+            self.assertEqual(expected_payload["data"][0]["type"], f"Type{i}")
+            self.assertEqual(expected_payload["data"][0]["attribute1"]["value"], 106)
+        mqttc.loop_stop()
+        mqttc.disconnect()
 
 
 if __name__ == "__main__":
