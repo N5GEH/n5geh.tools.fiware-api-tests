@@ -16,6 +16,7 @@ from filip.models import FiwareHeader
 from filip.models.ngsi_v2.context import ContextEntity
 from filip.utils.cleanup import clear_all
 from settings import settings
+import requests
 
 
 topic_default = "default/mqtt/notification"
@@ -256,6 +257,64 @@ class TestDataModel(unittest.TestCase):
 
 # test custom notification with json
 # topic = "custom/mqtt/notification/json"
+    @standard_test(
+        fiware_service=settings.FIWARE_SERVICE,
+        fiware_servicepath=settings.FIWARE_SERVICEPATH,
+        cb_url=settings.CB_URL
+    )
+    def test_custom_notification_json(self):
+        # post notification
+        notification_custom_mqtt_json = {
+          "description": "MQTT Command notification",
+          "subject": {
+            "entities": [
+              {
+                "id": standard_entity["id"]
+              }
+            ],
+            "condition": {
+                "attrs": ["attribute1"]
+            }
+          },
+          "notification": {
+            "mqttCustom": {
+              "url": str(settings.MQTT_BROKER_URL_INTERNAL),
+              "topic": topic_json,
+              "json": {
+                "attribute1": "${attribute1}"
+              }
+            }
+          },
+          "throttling": 0
+        }
+        # TODO use filip later
+        # self.cb_client.post_subscription(subscription=Subscription(
+        #     **notification_custom_mqtt_json))
+        url = f"{settings.CB_URL}v2/subscriptions/"
+        headers = {
+            'Content-Type': 'application/json',
+            'fiware-service': settings.FIWARE_SERVICE,
+            'fiware-servicePath': settings.FIWARE_SERVICEPATH
+        }
+        payload = json.dumps(notification_custom_mqtt_json)
+        response = requests.request("POST", url, headers=headers, data=payload)
+
+        # update value
+        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL_INTERNAL.host,
+                                         port=settings.MQTT_BROKER_URL_INTERNAL.port,
+                                         topic=topic_json)
+        time.sleep(1)
+
+        self.cb_client.update_attribute_value(entity_id=standard_entity["id"],
+                                              attr_name="attribute1", value=104)
+        time.sleep(1)
+
+        # check value
+        self.assertEqual(sub_res["topic"], topic_json)
+        expected_payload = json.loads(sub_res["payload"].decode())
+        self.assertEqual(expected_payload["attribute1"], 104)
+        mqttc.loop_stop()
+        mqttc.disconnect()
 
 # test custom notification with ngsi
 # topic = "custom/mqtt/notification/ngsi"
