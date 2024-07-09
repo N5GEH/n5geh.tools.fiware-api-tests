@@ -318,6 +318,72 @@ class TestDataModel(unittest.TestCase):
 
 # test custom notification with ngsi
 # topic = "custom/mqtt/notification/ngsi"
+    @standard_test(
+        fiware_service=settings.FIWARE_SERVICE,
+        fiware_servicepath=settings.FIWARE_SERVICEPATH,
+        cb_url=settings.CB_URL
+    )
+    def test_custom_notification_ngsi(self):
+        new_entity = {
+            "id": "newId",
+            "type": "newType",
+            "attribute_ngsi": {
+                "value": "${attribute1}",
+                "type": "Number"
+            }
+        }
+        # post notification
+        notification_custom_mqtt_ngsi = {
+          "description": "MQTT Command notification",
+          "subject": {
+            "entities": [
+              {
+                "id": standard_entity["id"]
+              }
+            ],
+            "condition": {
+                "attrs": ["attribute1"]
+            }
+          },
+          "notification": {
+            "mqttCustom": {
+              "url": str(settings.MQTT_BROKER_URL_INTERNAL),
+              "topic": topic_ngsi,
+              "ngsi": new_entity
+            }
+          },
+          "throttling": 0
+        }
+        # TODO use filip later
+        # self.cb_client.post_subscription(subscription=Subscription(
+        #     **notification_custom_mqtt))
+        url = f"{settings.CB_URL}v2/subscriptions/"
+        headers = {
+            'Content-Type': 'application/json',
+            'fiware-service': settings.FIWARE_SERVICE,
+            'fiware-servicePath': settings.FIWARE_SERVICEPATH
+        }
+        payload = json.dumps(notification_custom_mqtt_ngsi)
+        response = requests.request("POST", url, headers=headers, data=payload)
+
+        # update value
+        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL_INTERNAL.host,
+                                         port=settings.MQTT_BROKER_URL_INTERNAL.port,
+                                         topic=topic_ngsi)
+        time.sleep(1)
+
+        self.cb_client.update_attribute_value(entity_id=standard_entity["id"],
+                                              attr_name="attribute1", value=105)
+        time.sleep(1)
+
+        # check value
+        self.assertEqual(sub_res["topic"], topic_ngsi)
+        expected_payload = json.loads(sub_res["payload"].decode())
+        self.assertEqual(expected_payload["data"][0]["id"], new_entity["id"])
+        self.assertEqual(expected_payload["data"][0]["type"], new_entity["type"])
+        self.assertEqual(expected_payload["data"][0]["attribute_ngsi"]["value"], 105)
+        mqttc.loop_stop()
+        mqttc.disconnect()
 
 # test custom notification with dynamic topic
 # more entities
