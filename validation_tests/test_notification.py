@@ -206,6 +206,53 @@ class TestDataModel(unittest.TestCase):
 # test custom notification with payload
 # topic = "custom/mqtt/notification/payload"
 # "payload": "attribute1: ${attribute1}"
+    @standard_test(
+        fiware_service=settings.FIWARE_SERVICE,
+        fiware_servicepath=settings.FIWARE_SERVICEPATH,
+        cb_url=settings.CB_URL
+    )
+    def test_custom_notification_payload(self):
+        # post notification
+        notification_custom_mqtt = {
+          "description": "MQTT Command notification",
+          "subject": {
+            "entities": [
+              {
+                "id": standard_entity["id"]
+              }
+            ],
+            "condition": {
+                "attrs": ["attribute1"]
+            }
+          },
+          "notification": {
+            "mqtt": {
+              "url": settings.MQTT_BROKER_URL_INTERNAL,
+              "topic": topic_payload,
+              "payload": "attribute1: ${attribute1}"
+            }
+          },
+          "throttling": 0
+        }
+        self.cb_client.post_subscription(subscription=Subscription(
+            **notification_custom_mqtt))
+
+        # update value
+        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL_INTERNAL.host,
+                                         port=settings.MQTT_BROKER_URL_INTERNAL.port,
+                                         topic=topic_payload)
+        time.sleep(1)
+
+        self.cb_client.update_attribute_value(entity_id=standard_entity["id"],
+                                              attr_name="attribute1", value=103)
+        time.sleep(1)
+
+        # check value
+        self.assertEqual(sub_res["topic"], topic_payload)
+        expected_payload = json.loads(sub_res["payload"].decode())
+        self.assertEqual(expected_payload["data"][0]["attribute1"]["value"], 103)
+        mqttc.loop_stop()
+        mqttc.disconnect()
 
 # test custom notification with json
 # topic = "custom/mqtt/notification/json"
