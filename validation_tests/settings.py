@@ -40,6 +40,12 @@ class TestSettings(BaseSettings):
                                              validation_alias=AliasChoices(
                                                  'MQTT_BROKER_URL_INTERNAL',
                                                  'MQTT_URL_INTERNAL'))
+    MQTT_USERNAME: Optional[str] = Field(default=None,
+                                         validation_alias=AliasChoices('MQTT_USERNAME'))
+    MQTT_PASSWORD: Optional[str] = Field(default=None,
+                                         validation_alias=AliasChoices('MQTT_PASSWORD'))
+    MQTT_TLS: Optional[str] = Field(default=None,
+                                    validation_alias=AliasChoices('MQTT_TLS'))
 
     # IF CI_JOB_ID is present it will always overwrite the service path
     # TODO might not necessary
