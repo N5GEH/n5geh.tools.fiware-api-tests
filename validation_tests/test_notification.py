@@ -226,7 +226,7 @@ class TestDataModel(unittest.TestCase):
             }
           },
           "notification": {
-            "mqtt": {
+            "mqttCustom": {
               "url": settings.MQTT_BROKER_URL_INTERNAL,
               "topic": topic_payload,
               "payload": "attribute1: ${attribute1}"
@@ -249,8 +249,8 @@ class TestDataModel(unittest.TestCase):
 
         # check value
         self.assertEqual(sub_res["topic"], topic_payload)
-        expected_payload = json.loads(sub_res["payload"].decode())
-        self.assertEqual(expected_payload["data"][0]["attribute1"]["value"], 103)
+        expected_payload = sub_res["payload"].decode()
+        self.assertEqual(expected_payload, "attribute1: 103")
         mqttc.loop_stop()
         mqttc.disconnect()
 
