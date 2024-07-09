@@ -98,6 +98,11 @@ class TestDataModel(unittest.TestCase):
         mqttc.on_message = on_message
         if username:
             mqttc.username_pw_set(username=username, password=password)
+        else:
+            mqttc.username_pw_set(username=settings.MQTT_USERNAME,
+                                  password=settings.MQTT_PASSWORD)
+        if settings.MQTT_TLS:
+            mqttc.tls_set()
         mqttc.connect(host=host,
                       port=port)
         mqttc.subscribe(topic=topic)
@@ -436,6 +441,7 @@ class TestDataModel(unittest.TestCase):
             self.assertEqual(expected_payload["data"][0]["id"], f"Entity:{i}")
             self.assertEqual(expected_payload["data"][0]["type"], f"Type{i}")
             self.assertEqual(expected_payload["data"][0]["attribute1"]["value"], 106)
+            time.sleep(1)
         mqttc.loop_stop()
         mqttc.disconnect()
 

@@ -140,6 +140,10 @@ class TestDataModel(unittest.TestCase):
                                fiware_header=self.fiware_header)
 
         self.mqttc = Client()
+        self.mqttc.username_pw_set(username=settings.MQTT_USERNAME,
+                                   password=settings.MQTT_PASSWORD)
+        if settings.MQTT_TLS:
+            self.mqttc.tls_set()
         self.mqttc.connect(host=settings.MQTT_BROKER_URL.host,
                            port=settings.MQTT_BROKER_URL.port)
 
