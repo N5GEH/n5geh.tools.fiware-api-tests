@@ -1,0 +1,644 @@
+{
+	"info": {
+		"_postman_id": "753416ff-24ef-41a3-9070-fc854c35bb34",
+		"name": "FIWARE API Tests: QuantumLeap Subscriptions",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "29792673",
+		"_collection_link": "https://interstellar-capsule-568930.postman.co/workspace/FIWARE-Workspace~e6ef974a-b2f9-4aff-833a-e9152de87458/collection/29792673-753416ff-24ef-41a3-9070-fc854c35bb34?action=share&source=collection_link&creator=29792673"
+	},
+	"item": [
+		{
+			"name": "SetUp: Add Subscription",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 201\", function () {\r",
+							"  pm.response.to.have.status(201);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"description\": \"Notify QuantumLeap of all Motion Sensor count changes\",\r\n  \"subject\": {\r\n    \"entities\": [\r\n      {\r\n        \"idPattern\": \"{{product_type}}.*\"\r\n      }\r\n    ],\r\n    \"condition\": {\r\n      \"attrs\": [\r\n        \"price\"\r\n      ]\r\n    }\r\n  },\r\n  \"notification\": {\r\n    \"http\": {\r\n      \"url\": \"{{quantumleap}}/v2/notify\"\r\n    },\r\n    \"attrs\": [\r\n      \"price\"\r\n    ],\r\n    \"metadata\": [\"dateCreated\", \"dateModified\"]\r\n  }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{orion}}/v2/subscriptions",
+					"host": [
+						"{{orion}}"
+					],
+					"path": [
+						"v2",
+						"subscriptions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SetUp: Batch Create/Overwrite New Data Entities Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"setTimeout(function () {\r",
+							"    pm.test(\"Response status code is 204\", function () {\r",
+							"    pm.response.to.have.status(204);\r",
+							"    });\r",
+							"}, 3000);\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"actionType\":\"append\",\n  \"entities\":[\n    {\n        \"id\": \"{{first_product_id}}\",\n        \"type\": \"{{product_type}}\",\n        \"name\": { \"type\": \"Text\", \"value\": \"Apples\", \"metadata\": {} },\n        \"offerPrice\": { \"type\": \"Integer\", \"value\": 89, \"metadata\": {} },\n        \"price\": { \"type\": \"Integer\", \"value\": 99, \"metadata\": {} },\n        \"size\": { \"type\": \"Text\", \"value\": \"S\", \"metadata\": {} },\n        \"specialOffer\": { \"type\": \"Boolean\", \"value\": true, \"metadata\": {} }\n    },\n    {\n        \"id\": \"{{second_product_id}}\",\n        \"type\": \"{{product_type}}\",\n        \"name\": { \"type\": \"Text\", \"value\": \"Bananas\", \"metadata\": {} },\n        \"price\": { \"type\": \"Integer\", \"value\": 1099, \"metadata\": {} },\n        \"size\": { \"type\": \"Text\", \"value\": \"M\", \"metadata\": {} }\n    },\n    {\n        \"id\": \"{{third_product_id}}\",\n        \"type\": \"{{product_type}}\",\n        \"name\": { \"type\": \"Text\", \"value\": \"Coconuts\", \"metadata\": {} },\n        \"price\": { \"type\": \"Integer\", \"value\": 1499, \"metadata\": {} },\n        \"size\": { \"type\": \"Text\", \"value\": \"M\", \"metadata\": {} }\n    }\n]\n}"
+				},
+				"url": {
+					"raw": "{{orion}}/v2/op/update",
+					"host": [
+						"{{orion}}"
+					],
+					"path": [
+						"v2",
+						"op",
+						"update"
+					]
+				},
+				"description": "This example uses the convenience batch processing endpoint to adds or ammend two **Product** entities and one attribute (`offerPrice`) to the context.\n\n* if the entities already exist - the request will update the attributes of an entity. \n\n* if the entities do not exist, a new entity will be created.\n\n\nBatch processing uses the `/v2/op/update` endpoint with a payload with two attributes:\n* `actionType=append` means we will overwrite existing entities if they exist\n* The `entities` attribute holds an array of entities we wish to create/overwrite.\n\nEach product has a unique `id` following the NGSI-LD  [draft recommendation](https://docbox.etsi.org/ISG/CIM/Open/ISG_CIM_NGSI-LD_API_Draft_for_public_review.pdf)  and has been assigned `type=Product`.\n\n---\nSubsequent request using the same data with the `actionType=append` batch operation  can applied without changing the result beyond the initial application."
+			},
+			"response": []
+		},
+		{
+			"name": "Check Timeseries Entry",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}"
+					}
+				],
+				"url": {
+					"raw": "{{quantumleap}}/v2/entities/{{first_product_id}}/attrs/price",
+					"host": [
+						"{{quantumleap}}"
+					],
+					"path": [
+						"v2",
+						"entities",
+						"{{first_product_id}}",
+						"attrs",
+						"price"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Getting all Entities",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"",
+							"pm.test(\"Response status code is 200\", function () {",
+							"  pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"The response data array length must be 3\", function () {",
+							"    responseData = pm.response.json();",
+							"    pm.expect(responseData.length).to.be.equal(3)",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{orion}}/v2/entities",
+					"host": [
+						"{{orion}}"
+					],
+					"path": [
+						"v2",
+						"entities"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List all Subscriptions",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"  pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"The response data array length must be 1\", function () {\r",
+							"    responseData = pm.response.json();\r",
+							"    pm.expect(responseData.length).to.be.equal(1);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}"
+					}
+				],
+				"url": {
+					"raw": "{{orion}}/v2/subscriptions/",
+					"host": [
+						"{{orion}}"
+					],
+					"path": [
+						"v2",
+						"subscriptions",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Entity Attribute",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"setTimeout(function () {\r",
+							"    pm.test(\"Response status code is 204\", function () {\r",
+							"    pm.response.to.have.status(204);\r",
+							"    });\r",
+							"}, 3000);\r",
+							"\r",
+							"// This test is very unstable because the subscription list is not updated reliably\r",
+							"/*setTimeout(function () {\r",
+							"    pm.sendRequest({\r",
+							"        url: pm.variables.get(\"orion\") + \"/v2/subscriptions\", \r",
+							"        header: {\r",
+							"            \"fiware-service\": pm.variables.get(\"fiware_service\"), \r",
+							"            \"fiware-servicepath\": pm.variables.get(\"fiware_service_path\")\r",
+							"        }\r",
+							"    }, function (err, response) {\r",
+							"        console.log(response);\r",
+							"        \r",
+							"        pm.test(\"Checking the subscription of the price value of the first product\", function () {\r",
+							"            pm.expect(response.json()[0][\"notification\"][\"timesSent\"]).to.be.equal(1);\r",
+							"        });\r",
+							"    });\r",
+							"}, 3000);*/\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "text/plain"
+					},
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "66",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{orion}}/v2/entities/{{first_product_id}}/attrs/price/value",
+					"host": [
+						"{{orion}}"
+					],
+					"path": [
+						"v2",
+						"entities",
+						"{{first_product_id}}",
+						"attrs",
+						"price",
+						"value"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Timeseries Entity",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"The time series array length must be 2\", function () {\r",
+							"    responseData = pm.response.json();\r",
+							"    pm.expect(responseData[\"values\"].length).to.be.equal(2);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}"
+					}
+				],
+				"url": {
+					"raw": "{{quantumleap}}/v2/entities/{{first_product_id}}/attrs/price?lastN=3",
+					"host": [
+						"{{quantumleap}}"
+					],
+					"path": [
+						"v2",
+						"entities",
+						"{{first_product_id}}",
+						"attrs",
+						"price"
+					],
+					"query": [
+						{
+							"key": "lastN",
+							"value": "3"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "TearDown: Delete Historical QuantumLeap Data",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 204\", function () {\r",
+							"  pm.response.to.have.status(204);\r",
+							"});\r",
+							"\r",
+							"setTimeout(function () {\r",
+							"    pm.sendRequest({\r",
+							"        url: pm.variables.get(\"quantumleap\") + \"/v2/entities/\" + pm.variables.get(\"first_product_id\") + \"/attrs/price\", \r",
+							"        header: {\r",
+							"            \"fiware-service\": pm.variables.get(\"fiware_service\"), \r",
+							"            \"fiware-servicepath\": pm.variables.get(\"fiware_service_path\")\r",
+							"        }\r",
+							"    }, function (err, response) {\r",
+							"        console.log(response);\r",
+							"        \r",
+							"        pm.test(\"There should be no time series data anymore in quantumleap\", function () {\r",
+							"            pm.expect(response[\"code\"]).to.be.equal(404);\r",
+							"        });\r",
+							"    });\r",
+							"}, 3000);\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}"
+					}
+				],
+				"url": {
+					"raw": "{{quantumleap}}/v2/types/{{product_type}}",
+					"host": [
+						"{{quantumleap}}"
+					],
+					"path": [
+						"v2",
+						"types",
+						"{{product_type}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "TearDown: Delete Subscriptions",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Response status code is 200\", function () {\r",
+							"  pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"responseData = pm.response.json();\r",
+							"\r",
+							"responseData.forEach(function(item){\r",
+							"    pm.sendRequest({method: \"DELETE\", url: pm.variables.get(\"orion\") + \"/v2/subscriptions/\" + item[\"id\"], header: {\"fiware-service\": pm.variables.get(\"fiware_service\"), \"fiware-servicepath\": pm.variables.get(\"fiware_service_path\")}}, function (err, response) {\r",
+							"        console.log(response);\r",
+							"        pm.test(\"Response status code is 204\", function () {\r",
+							"            pm.expect(response[\"code\"]).to.be.equal(204);\r",
+							"        });\r",
+							"    });\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}"
+					}
+				],
+				"url": {
+					"raw": "{{orion}}/v2/subscriptions/",
+					"host": [
+						"{{orion}}"
+					],
+					"path": [
+						"v2",
+						"subscriptions",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "TearDown: Batch Delete Multiple Data Entities",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"\r",
+							"pm.test(\"Response status code is 204\", function () {\r",
+							"  pm.response.to.have.status(204);\r",
+							"});\r",
+							"\r",
+							"pm.sendRequest({url: pm.variables.get(\"orion\") + \"/v2/entities\", header: {\"fiware-service\": pm.variables.get(\"fiware_service\"), \"fiware-servicepath\": pm.variables.get(\"fiware_service_path\")}}, function (err, response) {\r",
+							"    pm.test(\"Checking if there is no entity anymore\", function () {\r",
+							"        pm.expect(response.json()).to.be.empty;\r",
+							"    });\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}",
+						"type": "text"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"actionType\":\"delete\",\n  \"entities\":[\n    {\n      \"id\":\"{{first_product_id}}\", \"type\":\"{{product_type}}\"\n    },\n    {\n      \"id\":\"{{second_product_id}}\", \"type\":\"{{product_type}}\"\n    },\n    {\n      \"id\":\"{{third_product_id}}\", \"type\":\"{{product_type}}\"\n    }\n  ]\n}"
+				},
+				"url": {
+					"raw": "{{orion}}/v2/op/update/",
+					"host": [
+						"{{orion}}"
+					],
+					"path": [
+						"v2",
+						"op",
+						"update",
+						""
+					]
+				},
+				"description": "This example uses the convenience batch processing endpoint to delete a series of available products.\n\nBatch processing uses the `/v2/op/update` endpoint with a payload with two attributes - `actionType=delete` means we will\ndelete something from the context and the `entities` attribute holds the `id` of the entities we wish to update.\n\n---\nIf any entity does not exist in the context, the result in an error response."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "orion",
+			"value": "https://orion-noauth.joint-fiware-test.iek.kfa-juelich.de",
+			"type": "string"
+		},
+		{
+			"key": "quantumleap",
+			"value": "https://quantumleap.joint-fiware-test.iek.kfa-juelich.de",
+			"type": "string"
+		},
+		{
+			"key": "fiware_service",
+			"value": "ql_subscription",
+			"type": "string"
+		},
+		{
+			"key": "fiware_service_path",
+			"value": "/",
+			"type": "string"
+		},
+		{
+			"key": "product_type",
+			"value": "Product",
+			"type": "string"
+		},
+		{
+			"key": "first_product_id",
+			"value": "urn:ngsi-ld:Product:001",
+			"type": "string"
+		},
+		{
+			"key": "second_product_id",
+			"value": "urn:ngsi-ld:Product:002",
+			"type": "string"
+		},
+		{
+			"key": "third_product_id",
+			"value": "urn:ngsi-ld:Product:003",
+			"type": "string"
+		}
+	]
+}

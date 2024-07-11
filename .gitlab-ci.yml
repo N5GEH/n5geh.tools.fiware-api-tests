@@ -22,3 +22,4 @@ postman_tests:
         - docker-compose -f docker-compose.yml up -d
         - docker ps
         - newman run postman/test_entity_update.postman_collection.json
+        - newman run postman/test_quantumleap_subscriptions.postman_collection.json
