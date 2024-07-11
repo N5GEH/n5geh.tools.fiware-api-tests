@@ -4,22 +4,13 @@ stages:
 
 postman_tests:
     stage: postman
-    image: docker:24.0.5
-    services:
-        - docker:24.0.5-dind
-    variables:
-        DOCKER_HOST: tcp://docker:2375/
-        DOCKER_DRIVER: overlay2
+    image: alpine:latest
     before_script:
-        - docker version
-        - docker-compose version
         - apk update
         - apk add --update nodejs npm
         - node --version
         - npm --version
         - npm install -g newman
     script:
-        #- docker-compose -f docker-compose.yml up -d
-        #- docker ps
         - newman run postman/test_entity_update.postman_collection.json
         - newman run postman/test_quantumleap_subscriptions.postman_collection.json
