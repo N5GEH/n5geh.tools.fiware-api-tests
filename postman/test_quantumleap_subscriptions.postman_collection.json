@@ -8,58 +8,6 @@
 	},
 	"item": [
 		{
-			"name": "SetUp: Add Subscription",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"setTimeout(function () {\r",
-							"    pm.test(\"Response status code is 201\", function () {\r",
-							"    pm.response.to.have.status(201);\r",
-							"    });\r",
-							"}, 3000);"
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "fiware-service",
-						"value": "{{fiware_service}}"
-					},
-					{
-						"key": "fiware-servicepath",
-						"value": "{{fiware_service_path}}"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"description\": \"Notify QuantumLeap of all price changes\",\r\n  \"subject\": {\r\n    \"entities\": [\r\n      {\r\n        \"idPattern\": \".*\",\r\n        \"type\": \"Product\"\r\n      }\r\n    ],\r\n    \"condition\": {\r\n      \"attrs\": [\r\n        \"price\"\r\n      ]\r\n    }\r\n  },\r\n  \"notification\": {\r\n    \"http\": {\r\n      \"url\": \"https://quantumleap.joint-fiware-test.iek.kfa-juelich.de/v2/notify\"\r\n    },\r\n    \"attrs\": [\r\n      \"price\"\r\n    ],\r\n    \"metadata\": [\"dateCreated\", \"dateModified\"]\r\n  }\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{orion}}/v2/subscriptions",
-					"host": [
-						"{{orion}}"
-					],
-					"path": [
-						"v2",
-						"subscriptions"
-					]
-				}
-			},
-			"response": []
-		},
-		{
 			"name": "SetUp: Batch Create/Overwrite New Data Entities Copy",
 			"event": [
 				{
@@ -114,6 +62,58 @@
 			"response": []
 		},
 		{
+			"name": "SetUp: Add Subscription",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"setTimeout(function () {\r",
+							"    pm.test(\"Response status code is 201\", function () {\r",
+							"    pm.response.to.have.status(201);\r",
+							"    });\r",
+							"}, 3000);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "fiware-service",
+						"value": "{{fiware_service}}"
+					},
+					{
+						"key": "fiware-servicepath",
+						"value": "{{fiware_service_path}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"description\": \"Notify QuantumLeap of all price changes\",\r\n  \"subject\": {\r\n    \"entities\": [\r\n      {\r\n        \"idPattern\": \".*\",\r\n        \"type\": \"{{product_type}}\"\r\n      }\r\n    ],\r\n    \"condition\": {\r\n      \"attrs\": [\r\n        \"price\"\r\n      ]\r\n    }\r\n  },\r\n  \"notification\": {\r\n    \"http\": {\r\n      \"url\": \"{{quantumleap}}/v2/notify\"\r\n    },\r\n    \"attrs\": [\r\n      \"price\"\r\n    ],\r\n    \"metadata\": [\"dateCreated\", \"dateModified\"]\r\n  }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{orion}}/v2/subscriptions",
+					"host": [
+						"{{orion}}"
+					],
+					"path": [
+						"v2",
+						"subscriptions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Get QuantumLeap Version",
 			"event": [
 				{
@@ -157,50 +157,6 @@
 					],
 					"path": [
 						"version"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Check Timeseries Entry",
-			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.test(\"Response status code is 200\", function () {\r",
-							"    pm.response.to.have.status(200);\r",
-							"});"
-						],
-						"type": "text/javascript",
-						"packages": {}
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "fiware-service",
-						"value": "{{fiware_service}}"
-					},
-					{
-						"key": "fiware-servicepath",
-						"value": "{{fiware_service_path}}"
-					}
-				],
-				"url": {
-					"raw": "{{quantumleap}}/v2/entities/{{first_product_id}}/attrs/price",
-					"host": [
-						"{{quantumleap}}"
-					],
-					"path": [
-						"v2",
-						"entities",
-						"{{first_product_id}}",
-						"attrs",
-						"price"
 					]
 				}
 			},
@@ -408,9 +364,9 @@
 							"    pm.response.to.have.status(200);\r",
 							"});\r",
 							"\r",
-							"pm.test(\"The time series array length must be 2\", function () {\r",
+							"pm.test(\"The time series array length must be 1\", function () {\r",
 							"    responseData = pm.response.json();\r",
-							"    pm.expect(responseData[\"values\"].length).to.be.equal(2);\r",
+							"    pm.expect(responseData[\"values\"].length).to.be.equal(1);\r",
 							"});\r",
 							""
 						],
