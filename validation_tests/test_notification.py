@@ -83,7 +83,8 @@ class TestDataModel(unittest.TestCase):
 
     @staticmethod
     def mqtt_setup(host, port, topic,
-                   username=None, password=None):
+                   username=None, password=None,
+                   tls: bool = False):
         sub_res = {
             "topic": None,
             "payload": None
@@ -101,7 +102,7 @@ class TestDataModel(unittest.TestCase):
         else:
             mqttc.username_pw_set(username=settings.MQTT_USERNAME,
                                   password=settings.MQTT_PASSWORD)
-        if settings.MQTT_TLS:
+        if tls:
             mqttc.tls_set()
         mqttc.connect(host=host,
                       port=port)
@@ -136,19 +137,26 @@ class TestDataModel(unittest.TestCase):
           },
           "throttling": 0
         }
+        if settings.MQTT_USERNAME:
+            notification_default_mqtt["notification"][
+                "mqtt"]["user"] = settings.MQTT_USERNAME
+            notification_default_mqtt["notification"][
+                "mqtt"]["passwd"] = settings.MQTT_PASSWORD
         self.cb_client.post_subscription(subscription=Subscription(
             **notification_default_mqtt))
 
         # update value
         # self.mqtt_start()
-        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL_INTERNAL.host,
-                                         port=settings.MQTT_BROKER_URL_INTERNAL.port,
-                                         topic=topic_default)
-        time.sleep(1)
+        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL.host,
+                                         port=settings.MQTT_BROKER_URL.port,
+                                         topic=topic_default,
+                                         tls=settings.MQTT_TLS
+                                         )
+        time.sleep(3)
 
         self.cb_client.update_attribute_value(entity_id=standard_entity["id"],
                                               attr_name="attribute1", value=101)
-        time.sleep(2)
+        time.sleep(3)
 
         # check value
         self.assertEqual(sub_res["topic"], topic_default)
@@ -194,11 +202,12 @@ class TestDataModel(unittest.TestCase):
                                          port=1884,
                                          topic=topic_auth,
                                          username="rw",
-                                         password="readwrite")
-        time.sleep(1)
+                                         password="readwrite",
+                                         tls=False)
+        time.sleep(3)
         self.cb_client.update_attribute_value(entity_id=standard_entity["id"],
                                               attr_name="attribute1", value=102)
-        time.sleep(2)
+        time.sleep(3)
 
         # check value
         self.assertEqual(sub_res["topic"], topic_auth)
@@ -242,14 +251,16 @@ class TestDataModel(unittest.TestCase):
             **notification_custom_mqtt))
 
         # update value
-        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL_INTERNAL.host,
-                                         port=settings.MQTT_BROKER_URL_INTERNAL.port,
-                                         topic=topic_payload)
-        time.sleep(1)
+        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL.host,
+                                         port=settings.MQTT_BROKER_URL.port,
+                                         topic=topic_payload,
+                                         tls=settings.MQTT_TLS
+                                         )
+        time.sleep(3)
 
         self.cb_client.update_attribute_value(entity_id=standard_entity["id"],
                                               attr_name="attribute1", value=103)
-        time.sleep(1)
+        time.sleep(3)
 
         # check value
         self.assertEqual(sub_res["topic"], topic_payload)
@@ -301,16 +312,19 @@ class TestDataModel(unittest.TestCase):
         }
         payload = json.dumps(notification_custom_mqtt_json)
         response = requests.request("POST", url, headers=headers, data=payload)
+        self.assertEqual(response.ok, True)
 
         # update value
-        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL_INTERNAL.host,
-                                         port=settings.MQTT_BROKER_URL_INTERNAL.port,
-                                         topic=topic_json)
-        time.sleep(1)
+        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL.host,
+                                         port=settings.MQTT_BROKER_URL.port,
+                                         topic=topic_json,
+                                         tls=settings.MQTT_TLS
+                                         )
+        time.sleep(3)
 
         self.cb_client.update_attribute_value(entity_id=standard_entity["id"],
                                               attr_name="attribute1", value=104)
-        time.sleep(1)
+        time.sleep(3)
 
         # check value
         self.assertEqual(sub_res["topic"], topic_json)
@@ -370,14 +384,16 @@ class TestDataModel(unittest.TestCase):
         response = requests.request("POST", url, headers=headers, data=payload)
 
         # update value
-        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL_INTERNAL.host,
-                                         port=settings.MQTT_BROKER_URL_INTERNAL.port,
-                                         topic=topic_ngsi)
-        time.sleep(1)
+        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL.host,
+                                         port=settings.MQTT_BROKER_URL.port,
+                                         topic=topic_ngsi,
+                                         tls=settings.MQTT_TLS
+                                         )
+        time.sleep(3)
 
         self.cb_client.update_attribute_value(entity_id=standard_entity["id"],
                                               attr_name="attribute1", value=105)
-        time.sleep(1)
+        time.sleep(3)
 
         # check value
         self.assertEqual(sub_res["topic"], topic_ngsi)
@@ -427,21 +443,23 @@ class TestDataModel(unittest.TestCase):
             **notification_custom_mqtt_dynamic_topic))
 
         # update value
-        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL_INTERNAL.host,
-                                         port=settings.MQTT_BROKER_URL_INTERNAL.port,
-                                         topic=topic_dynamic+"/#")
-        time.sleep(1)
+        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL.host,
+                                         port=settings.MQTT_BROKER_URL.port,
+                                         topic=topic_dynamic+"/#",
+                                         tls=settings.MQTT_TLS
+                                         )
+        time.sleep(3)
         for i in range(3):
             self.cb_client.update_attribute_value(entity_id=f"Entity:{i}",
                                                   attr_name="attribute1", value=106)
-            time.sleep(1)
+            time.sleep(3)
             # check value
             self.assertEqual(sub_res["topic"], topic_dynamic+f"/Type{i}"+f"/Entity:{i}")
             expected_payload = json.loads(sub_res["payload"].decode())
             self.assertEqual(expected_payload["data"][0]["id"], f"Entity:{i}")
             self.assertEqual(expected_payload["data"][0]["type"], f"Type{i}")
             self.assertEqual(expected_payload["data"][0]["attribute1"]["value"], 106)
-            time.sleep(1)
+            time.sleep(3)
         mqttc.loop_stop()
         mqttc.disconnect()
 
