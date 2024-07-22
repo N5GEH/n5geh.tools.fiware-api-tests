@@ -49,8 +49,7 @@
 					"raw": "{\n  \"actionType\":\"append\",\n  \"entities\":[\n    {\n        \"id\": \"{{first_product_id}}\",\n        \"type\": \"{{product_type}}\",\n        \"name\": { \"type\": \"Text\", \"value\": \"Apples\", \"metadata\": {} },\n        \"offerPrice\": { \"type\": \"Integer\", \"value\": 89, \"metadata\": {} },\n        \"price\": { \"type\": \"Integer\", \"value\": 99, \"metadata\": {} },\n        \"size\": { \"type\": \"Text\", \"value\": \"S\", \"metadata\": {} },\n        \"specialOffer\": { \"type\": \"Boolean\", \"value\": true, \"metadata\": {} }\n    },\n    {\n        \"id\": \"{{second_product_id}}\",\n        \"type\": \"{{product_type}}\",\n        \"name\": { \"type\": \"Text\", \"value\": \"Bananas\", \"metadata\": {} },\n        \"price\": { \"type\": \"Integer\", \"value\": 1099, \"metadata\": {} },\n        \"size\": { \"type\": \"Text\", \"value\": \"M\", \"metadata\": {} }\n    },\n    {\n        \"id\": \"{{third_product_id}}\",\n        \"type\": \"{{product_type}}\",\n        \"name\": { \"type\": \"Text\", \"value\": \"Coconuts\", \"metadata\": {} },\n        \"price\": { \"type\": \"Integer\", \"value\": 1499, \"metadata\": {} },\n        \"size\": { \"type\": \"Text\", \"value\": \"M\", \"metadata\": {} }\n    }\n]\n}"
 				},
 				"url": {
-					"raw": "{{protocol}}://{{orion}}/v2/op/update",
-					"protocol": "{{protocol}}",
+					"raw": "{{orion}}/v2/op/update",
 					"host": [
 						"{{orion}}"
 					],
@@ -108,8 +107,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "{{protocol}}://{{orion}}/v2/entities",
-					"protocol": "{{protocol}}",
+					"raw": "{{orion}}/v2/entities",
 					"host": [
 						"{{orion}}"
 					],
@@ -170,8 +168,7 @@
 					"raw": "89"
 				},
 				"url": {
-					"raw": "{{protocol}}://{{orion}}/v2/entities/{{first_product_id}}/attrs/price/value",
-					"protocol": "{{protocol}}",
+					"raw": "{{orion}}/v2/entities/{{first_product_id}}/attrs/price/value",
 					"host": [
 						"{{orion}}"
 					],
@@ -237,8 +234,7 @@
 					"raw": " {\n      \"price\":{\"type\":\"Integer\", \"value\": 79},\n      \"name\": {\"type\":\"Text\", \"value\": \"Ale\"}\n}"
 				},
 				"url": {
-					"raw": "{{protocol}}://{{orion}}/v2/entities/{{first_product_id}}/attrs",
-					"protocol": "{{protocol}}",
+					"raw": "{{orion}}/v2/entities/{{first_product_id}}/attrs",
 					"host": [
 						"{{orion}}"
 					],
@@ -301,8 +297,7 @@
 					"raw": "{\n      \"price\": {\"type\":\"String\", \"value\": \"79\"}\n}"
 				},
 				"url": {
-					"raw": "{{protocol}}://{{orion}}/v2/entities/{{first_product_id}}/attrs",
-					"protocol": "{{protocol}}",
+					"raw": "{{orion}}/v2/entities/{{first_product_id}}/attrs",
 					"host": [
 						"{{orion}}"
 					],
@@ -367,8 +362,7 @@
 					"raw": " {\n      \"price\": {\"value\": 79},\n      \"name\": {\"type\":\"String\", \"value\": \"Ale\"}\n}"
 				},
 				"url": {
-					"raw": "{{protocol}}://{{orion}}/v2/entities/{{first_product_id}}/attrs",
-					"protocol": "{{protocol}}",
+					"raw": "{{orion}}/v2/entities/{{first_product_id}}/attrs",
 					"host": [
 						"{{orion}}"
 					],
@@ -425,8 +419,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "{{protocol}}://{{orion}}/v2/entities/{{first_product_id}}/attrs/specialOffer",
-					"protocol": "{{protocol}}",
+					"raw": "{{orion}}/v2/entities/{{first_product_id}}/attrs/specialOffer",
 					"host": [
 						"{{orion}}"
 					],
@@ -490,8 +483,7 @@
 					"raw": "{\n  \"actionType\":\"delete\",\n  \"entities\":[\n    {\n      \"id\":\"{{first_product_id}}\", \"type\":\"{{product_type}}\",\n      \"price\":{},\n      \"name\": {}\n    }\n  ]\n}"
 				},
 				"url": {
-					"raw": "{{protocol}}://{{orion}}/v2/op/update/",
-					"protocol": "{{protocol}}",
+					"raw": "{{orion}}/v2/op/update/",
 					"host": [
 						"{{orion}}"
 					],
@@ -554,8 +546,7 @@
 					"raw": "{\n      \"specialOffer\":{\"value\": true}\n}"
 				},
 				"url": {
-					"raw": "{{protocol}}://{{orion}}/v2/entities/{{first_product_id}}/attrs",
-					"protocol": "{{protocol}}",
+					"raw": "{{orion}}/v2/entities/{{first_product_id}}/attrs",
 					"host": [
 						"{{orion}}"
 					],
@@ -620,8 +611,7 @@
 					"raw": "{\n  \"actionType\":\"append_strict\",\n  \"entities\":[\n    {\n      \"id\":\"{{first_product_id}}\", \"type\":\"{{product_type}}\",\n      \"name\": { \"type\": \"Text\", \"value\": \"Apples\", \"metadata\": {} },\n      \"price\": { \"type\": \"Integer\", \"value\": 99, \"metadata\": {} }\n    }\n  ]\n}"
 				},
 				"url": {
-					"raw": "{{protocol}}://{{orion}}/v2/op/update/",
-					"protocol": "{{protocol}}",
+					"raw": "{{orion}}/v2/op/update/",
 					"host": [
 						"{{orion}}"
 					],
@@ -684,8 +674,7 @@
 					"raw": "{\n  \"actionType\":\"append\",\n  \"entities\":[\n    {\n      \"id\":\"{{first_product_id}}\", \"type\":\"{{product_type}}\",\n      \"name\": { \"type\": \"Text\", \"value\": \"Apples\", \"metadata\": {\"TimeInstant\": {\n                    \"type\": \"DateTime\",\n                    \"value\": \"2024-04-04T14:08:16.655Z\"}} \n              },\n      \"price\": { \"type\": \"Integer\", \"value\": 99, \"metadata\": {\"TimeInstant\": {\n                    \"type\": \"DateTime\",\n                    \"value\": \"2024-04-04T14:08:16.655Z\"}} \n                }\n    }\n  ]\n}"
 				},
 				"url": {
-					"raw": "{{protocol}}://{{orion}}/v2/op/update/",
-					"protocol": "{{protocol}}",
+					"raw": "{{orion}}/v2/op/update/",
 					"host": [
 						"{{orion}}"
 					],
@@ -747,8 +736,7 @@
 					"raw": "{\n  \"actionType\":\"delete\",\n  \"entities\":[\n    {\n      \"id\":\"{{first_product_id}}\", \"type\":\"{{product_type}}\"\n    },\n    {\n      \"id\":\"{{second_product_id}}\", \"type\":\"{{product_type}}\"\n    },\n    {\n      \"id\":\"{{third_product_id}}\", \"type\":\"{{product_type}}\"\n    }\n  ]\n}"
 				},
 				"url": {
-					"raw": "{{protocol}}://{{orion}}/v2/op/update/",
-					"protocol": "{{protocol}}",
+					"raw": "{{orion}}/v2/op/update/",
 					"host": [
 						"{{orion}}"
 					],
@@ -788,13 +776,8 @@
 	],
 	"variable": [
 		{
-			"key": "protocol",
-			"value": "http",
-			"type": "string"
-		},
-		{
 			"key": "orion",
-			"value": "docker:1026",
+			"value": "https://orion-noauth.joint-fiware-test.iek.kfa-juelich.de",
 			"type": "string"
 		},
 		{
