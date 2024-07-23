@@ -11,6 +11,7 @@ from filip.models.ngsi_v2.context import ContextEntity, NamedContextAttribute
 from filip.models.ngsi_v2.iot import Device, ServiceGroup, DeviceAttribute
 from filip.utils.cleanup import clear_all, clean_test
 from requests import HTTPError
+from copy import deepcopy
 
 from settings import settings
 
@@ -424,7 +425,11 @@ class TestDataModel(unittest.TestCase):
         :return:
         """
         # test sending anonymous attributes, and fetching, should fail
-        topic = f"/json/{standard_service_group['apikey']}/{standard_device['device_id']}/attrs"
+        anonymous_device = deepcopy(standard_device)
+        anonymous_device["device_id"] = "anonymous_device"
+        anonymous_device["explicitAttrs"] = False
+        self.iotc.post_device(device=Device(**anonymous_device))
+        topic = f"/json/{standard_service_group['apikey']}/{anonymous_device['device_id']}/attrs"
         anonymous_attribute = "anonymous_attribute"
         anonymous_value = 77
         # self.mqttc.publish(topic=topic,
