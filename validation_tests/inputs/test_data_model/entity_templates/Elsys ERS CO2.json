@@ -1,0 +1,7 @@
+{
+    "id": null,
+    "type": "ERSCO2Sensor",
+    "co2": {
+        "type": "Number"
+    }
+}

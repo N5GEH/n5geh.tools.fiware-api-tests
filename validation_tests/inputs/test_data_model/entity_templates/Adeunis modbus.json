@@ -1,0 +1,16 @@
+{
+    "id": null,
+    "type": "AdeunisAirConditionSensor",
+    "temperature": {
+        "type": "Number"
+    },
+    "co2": {
+        "type": "Number"
+    },
+    "presence": {
+        "type": "Boolean"
+    },
+    "humidity": {
+        "type": "Number"
+    }
+}

@@ -1,0 +1,7 @@
+{
+    "id": null,
+    "type": "AMECO2Sensor",
+    "co2": {
+        "type": "Number"
+    }
+}

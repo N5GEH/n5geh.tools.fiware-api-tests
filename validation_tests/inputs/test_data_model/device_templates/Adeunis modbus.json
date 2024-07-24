@@ -1,0 +1,25 @@
+{
+    "device_id": null,
+    "entity_name": null,
+    "entity_type": "AdeunisAirConditionSensor",
+    "transport": "MQTT",
+    "explicitAttrs": true,
+    "attributes": [
+        {
+            "name": "temperature",
+            "type": "Number"
+        },
+        {
+            "name": "co2",
+            "type": "Number"
+        },
+        {
+            "name": "presence",
+            "type": "Boolean"
+        },
+        {
+            "name": "humidity",
+            "type": "Number"
+        }
+    ]
+}

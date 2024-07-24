@@ -1,0 +1,13 @@
+{
+    "device_id": null,
+    "entity_name": null,
+    "entity_type": "ERSCO2Sensor",
+    "transport": "MQTT",
+    "explicitAttrs": true,
+    "attributes": [
+        {
+            "name": "co2",
+            "type": "Number"
+        }
+    ]
+}
