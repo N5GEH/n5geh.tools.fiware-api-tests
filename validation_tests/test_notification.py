@@ -10,7 +10,7 @@ import unittest
 import json
 from functools import wraps
 from typing import Callable
-from paho.mqtt.client import Client
+from paho.mqtt.client import Client, CallbackAPIVersion
 from filip.clients.ngsi_v2 import ContextBrokerClient
 from filip.models import FiwareHeader
 from filip.models.ngsi_v2.context import ContextEntity
@@ -95,7 +95,7 @@ class TestDataModel(unittest.TestCase):
             sub_res["payload"] = msg.payload
             sub_res["topic"] = msg.topic
 
-        mqttc = Client()
+        mqttc = Client(CallbackAPIVersion.VERSION2)
         mqttc.on_message = on_message
         if username:
             mqttc.username_pw_set(username=username, password=password)
