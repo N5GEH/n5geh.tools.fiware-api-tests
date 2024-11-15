@@ -1,3 +1,4 @@
-filip==0.5.0
+filip==0.4.1
+paho-mqtt~=2.0.0
 # numpy==1.26.4
 openpyxl==3.1.2
