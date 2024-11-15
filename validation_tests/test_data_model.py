@@ -4,7 +4,7 @@ import json
 import os.path
 from functools import wraps
 from typing import Callable
-from paho.mqtt.client import Client
+from paho.mqtt.client import Client, CallbackAPIVersion
 from filip.clients.ngsi_v2 import ContextBrokerClient, IoTAClient
 from filip.models import FiwareHeader
 from filip.models.ngsi_v2.context import ContextEntity, NamedContextAttribute
@@ -140,7 +140,7 @@ class TestDataModel(unittest.TestCase):
         self.iotc = IoTAClient(url=settings.IOTA_JSON_URL,
                                fiware_header=self.fiware_header)
 
-        self.mqttc = Client()
+        self.mqttc = Client(callback_api_version=CallbackAPIVersion.VERSION2,)
         self.mqttc.username_pw_set(username=settings.MQTT_USERNAME,
                                    password=settings.MQTT_PASSWORD)
         if settings.MQTT_TLS:
