@@ -85,3 +85,5 @@ python -m unittest discover --verbose . "test_*.py"
 To integrate the tests in a CI/CD pipeline, you can check the *.gitlab-ci.yml* file as an example. 
 Of course, different platforms will have different settings, but the basic structure of the pipeline will be similar. 
 Normally, in the pipeline, you will need to set the environment variables in the repository settings, for example, in GitLab, under *Settings > CI/CD > Variables*.
+
+#### placeholder for screenshot of the variables
