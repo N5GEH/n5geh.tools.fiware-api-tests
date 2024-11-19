@@ -1,8 +1,14 @@
 # Fiware API Tests
 
+- [FIWARE Test Cluster](#fiware-test-cluster)
+- [Tests with Postman](#tests-with-postman)
+  - [Write a Collection of Tests](#write-a-collection-of-tests)
+  - [Include Test Collection in GitLab CI](#include-test-collection-in-gitlab-ci)
+- [Tests with FIWARE](#tests-with-fiware)
+
 This project includes various test scenarios of the FIWARE infrastructure. Depending on the use case, the FIWARE API is used to ensure that all basic components, such as the Orion Context Broker or the IoT Agent, function reliably. 
 
-Tests confirm that your API is working as expected, that integrations between services are functioning reliably, and that any changes haven't broken existing functionality. In this project, Postman requests are used for direct testing of the API. For more complex scenarios, libraries like FiLiP are used.
+Tests confirm that your API is working as expected, that integrations between services are functioning reliably, and that any changes haven't broken existing functionality. In this project, Postman requests are used for direct testing of the API. For more complex scenarios, tests are implemented in Python, using libraries like [FiLiP](https://github.com/RWTH-EBC/FiLiP).
 
 ## FIWARE Test Cluster
 
@@ -15,7 +21,7 @@ The following FIWARE components can be used under the specified URLs for the api
 - MQTT Broker (with TLS): mqtt://joint-fiware-test.iek.kfa-juelich.de:8883
 
  
-## Postman
+## Tests with Postman
 
 The **Scripts > Post-response** tab of a Postman request allows for any post-processing after a request is sent and includes the ability to write tests for assessing response data. The Post-response tab has the Chai.js library built in, so you can use Chai's behavior-driven development (BDD) syntax to create readable test assertions.
 
@@ -40,3 +46,39 @@ In the next step you can automate your testing by integrating collection runs wi
 Once a collection is completed, we need to export it in JSON format and store the file in the Git repository. To run a Postman collection in the pipeline, we execute the exported JSON file from the command-line collection runner newman (see the job *postman_tests* inside the *.gitlab-ci.yml*).
 
 An alternative method is to back up your Postman Collections to GitLab, an open-source Git repository manager, with the [Postman to GitLab integration](https://learning.postman.com/docs/integrations/available-integrations/gitlab/).
+
+## Tests with FIWARE
+
+The tests cases implemented in Python can be found under the *validation_tests* directory. The tests
+are mainly based on the FiLiP library. To run the tests, you can either set up your local environment or add the tests to a CI/CD pipeline.
+
+### Local testing environment
+The local testing environment is recommended for developinp purpose.
+Set up a Python environment:
+```bash
+cd fiware-api-tests
+pip install -r requirements.txt
+```
+
+To run the tests locally, you will also need to set the environment variables by creating a *.env* file. The necessary variables are:
+
+- LOG_LEVEL
+- CB_URL
+- IOTA_JSON_URL
+- IOTA_URL
+- QL_URL  
+- MQTT_BROKER_URL
+- MQTT_BROKER_URL_INTERNAL
+- MQTT_USERNAME (only if required)
+- MQTT_PASSWORD (only if required)
+- MQTT_TLS (only set to ``True`` if required)
+- FIWARE_SERVICE
+- FIWARE_SERVICEPATH
+
+The test scripts can be executed with the following command:
+```bash
+python -m unittest discover -s validation_tests -p 'test_*.py'
+```
+
+### CI/CD pipeline
+ToDo
