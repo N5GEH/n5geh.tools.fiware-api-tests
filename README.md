@@ -77,7 +77,8 @@ To run the tests locally, you will also need to set the environment variables by
 
 The test scripts can be executed with the following command:
 ```bash
-python -m unittest discover -s validation_tests -p 'test_*.py'
+cd validation_tests
+python -m unittest discover --verbose . "test_*.py"
 ```
 
 ### CI/CD pipeline
