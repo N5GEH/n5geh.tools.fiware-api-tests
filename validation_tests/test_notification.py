@@ -301,18 +301,8 @@ class TestDataModel(unittest.TestCase):
           },
           "throttling": 0
         }
-        # TODO use filip later
-        # self.cb_client.post_subscription(subscription=Subscription(
-        #     **notification_custom_mqtt_json))
-        url = f"{settings.CB_URL}v2/subscriptions/"
-        headers = {
-            'Content-Type': 'application/json',
-            'fiware-service': settings.FIWARE_SERVICE,
-            'fiware-servicePath': settings.FIWARE_SERVICEPATH
-        }
-        payload = json.dumps(notification_custom_mqtt_json)
-        response = requests.request("POST", url, headers=headers, data=payload)
-        self.assertEqual(response.ok, True)
+        self.cb_client.post_subscription(subscription=Subscription(
+            **notification_custom_mqtt_json))
 
         # update value
         sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL.host,
@@ -371,17 +361,8 @@ class TestDataModel(unittest.TestCase):
           },
           "throttling": 0
         }
-        # TODO use filip later
-        # self.cb_client.post_subscription(subscription=Subscription(
-        #     **notification_custom_mqtt))
-        url = f"{settings.CB_URL}v2/subscriptions/"
-        headers = {
-            'Content-Type': 'application/json',
-            'fiware-service': settings.FIWARE_SERVICE,
-            'fiware-servicePath': settings.FIWARE_SERVICEPATH
-        }
-        payload = json.dumps(notification_custom_mqtt_ngsi)
-        response = requests.request("POST", url, headers=headers, data=payload)
+        self.cb_client.post_subscription(subscription=Subscription(
+            **notification_custom_mqtt_ngsi))
 
         # update value
         sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL.host,
