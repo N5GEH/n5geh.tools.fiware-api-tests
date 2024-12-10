@@ -1,6 +1,5 @@
 
 stages:
-  - postman
   - pythontest
 
 postman_tests:
