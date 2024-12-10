@@ -31,7 +31,7 @@ py_unittest:
         - apk add --update nodejs npm
         - node --version
         - npm --version
-        - apk add --update python3=3.10.13 py3-pip  # Add Python and pip
+        - apk add --update python3=3.11.11-r0 py3-pip  # Add Python and pip
         - python3 --version         # Verify Python installation
         - pip3 --version
         - pip install pytest
