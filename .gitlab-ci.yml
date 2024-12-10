@@ -1,6 +1,7 @@
 
 stages:
   - postman
+  - pythontest
 
 postman_tests:
     stage: postman
@@ -14,3 +15,28 @@ postman_tests:
     script:
         - newman run postman/test_entity_update.postman_collection.json
         - newman run postman/test_quantumleap_subscriptions.postman_collection.json
+
+py_unittest:
+    stage: pythontest
+    image: docker:24.0.5
+    services:
+        - docker:24.0.5-dind
+    variables:
+        DOCKER_HOST: tcp://docker:2375/
+        DOCKER_DRIVER: overlay2
+    before_script:
+        - docker version
+        - docker-compose version
+        - apk update
+        - apk add --update nodejs npm
+        - node --version
+        - npm --version
+        - apk add --update python3=3.10.13 py3-pip  # Add Python and pip
+        - python3 --version         # Verify Python installation
+        - pip3 --version
+        - pip install pytest
+    script:
+        - docker-compose -f docker-compose.yml up -d
+        - docker ps
+        - python -m unittest discover --verbose -s "validation_tests" -p "test_*.py"
+
