@@ -35,8 +35,9 @@ py_unittest:
         - python3 --version         # Verify Python installation
         - pip3 --version
         - pip install pytest
+        - git clone https://github.com/N5GEH/n5geh.platform.git
     script:
-        - docker-compose -f docker-compose.yml up -d
+        - docker-compose -f ./n5geh.platform/v2/docker-compose.yml up -d
         - docker ps
         - python -m unittest discover --verbose -s "validation_tests" -p "test_*.py"
 
