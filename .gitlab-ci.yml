@@ -39,6 +39,7 @@ py_unittest:
         - git --version         # Verify Git installation
     script:
         - git clone https://github.com/N5GEH/n5geh.platform.git
+        - docker-compose -f ./n5geh.platform/v2/docker-compose.yml pull
         - docker-compose -f ./n5geh.platform/v2/docker-compose.yml up -d
         - docker ps
         - curl http://127.0.0.1:1026
