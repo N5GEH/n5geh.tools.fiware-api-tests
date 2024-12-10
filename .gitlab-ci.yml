@@ -34,6 +34,8 @@ py_unittest:
         - apk add --update python3=3.11.11-r0 py3-pip  # Add Python and pip
         - python3 --version         # Verify Python installation
         - pip3 --version
+        - apk add --update git  # Install Git if not already installed (for Alpine-based images)
+        - git --version         # Verify Git installation
     script:
         - git clone https://github.com/N5GEH/n5geh.platform.git
         - docker-compose -f ./n5geh.platform/v2/docker-compose.yml up -d
