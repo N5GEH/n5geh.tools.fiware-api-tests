@@ -39,7 +39,7 @@ py_unittest:
     script:
         - git clone https://github.com/N5GEH/n5geh.platform.git
         - docker-compose -f ./n5geh.platform/v2/docker-compose.yml up -d
-        - curl http://orion:1026
+        - curl http://docker:1026
         - docker ps
         - pip install -r requirements.txt
         - python -m unittest discover --verbose -s "validation_tests" -p "test_*.py"
