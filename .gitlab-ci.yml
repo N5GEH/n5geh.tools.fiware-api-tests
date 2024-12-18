@@ -1,7 +1,21 @@
 
 stages:
+  - transfer
   - pythontest
   - postman
+
+transfer_images:
+  stage: transfer
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+  script:
+    - docker pull fiware/orion:3.7.0
+    - docker tag fiware/orion:3.7.0 jugit-registry.fz-juelich.de/iek-10/core-projects/fiware/fiware-api-tests/fiware/orion:3.7.0
+    - docker push jugit-registry.fz-juelich.de/iek-10/core-projects/fiware/fiware-api-tests/fiware/orion:3.7.0
 
 postman_tests:
     stage: postman
