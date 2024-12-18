@@ -9,7 +9,7 @@ from filip.clients.ngsi_v2 import ContextBrokerClient, IoTAClient
 from filip.models import FiwareHeader
 from filip.models.ngsi_v2.context import ContextEntity, NamedContextAttribute
 from filip.models.ngsi_v2.iot import Device, ServiceGroup, DeviceAttribute
-from filip.utils.cleanup import clear_all, clean_test
+from filip.utils.cleanup import clear_all
 from requests import HTTPError
 from copy import deepcopy
 
