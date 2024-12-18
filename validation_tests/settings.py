@@ -12,28 +12,28 @@ class TestSettings(BaseSettings):
     LOG_LEVEL: str = Field(default="ERROR",
                            validation_alias=AliasChoices('LOG_LEVEL', 'LOGLEVEL'))
 
-    CB_URL: AnyHttpUrl = Field(default="http://orion:1026",
+    CB_URL: AnyHttpUrl = Field(default="http://127.0.0.1:1026",
                                validation_alias=AliasChoices('ORION_URL',
                                                              'CB_URL',
                                                              'CB_HOST',
                                                              'CONTEXTBROKER_URL',
                                                              'OCB_URL'))
-    IOTA_URL: AnyHttpUrl = Field(default="http://iot-agent:4041",
+    IOTA_URL: AnyHttpUrl = Field(default="http://127.0.0.1:4041",
                                  validation_alias='IOTA_URL')
-    IOTA_JSON_URL: AnyHttpUrl = Field(default="http://iot-agent:4041",
+    IOTA_JSON_URL: AnyHttpUrl = Field(default="http://127.0.0.1:4041",
                                       validation_alias='IOTA_JSON_URL')
 
-    QL_URL: AnyHttpUrl = Field(default="http://quantumleap:8668",
+    QL_URL: AnyHttpUrl = Field(default="http://127.0.0.1:8668",
                                validation_alias=AliasChoices('QUANTUMLEAP_URL',
                                                              'QL_URL'))
 
-    MQTT_BROKER_URL: AnyUrl = Field(default="mqtt://mqtt-broker:1883",
+    MQTT_BROKER_URL: AnyUrl = Field(default="mqtt://127.0.0.1:1883",
                                     validation_alias=AliasChoices(
                                         'MQTT_BROKER_URL',
                                         'MQTT_URL',
                                         'MQTT_BROKER'))
 
-    MQTT_BROKER_URL_INTERNAL: AnyUrl = Field(default="mqtt://mqtt-broker:1883",
+    MQTT_BROKER_URL_INTERNAL: AnyUrl = Field(default="mqtt://mosquitto:1883",
                                              validation_alias=AliasChoices(
                                                  'MQTT_BROKER_URL_INTERNAL',
                                                  'MQTT_URL_INTERNAL'))
