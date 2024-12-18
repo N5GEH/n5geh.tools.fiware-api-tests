@@ -4,7 +4,7 @@ stages:
   - pythontest
   - postman
 
-transfer_images:
+.transfer_images:
   stage: transfer
   image: docker:latest
   services:
@@ -55,7 +55,7 @@ py_unittest:
         - git --version         # Verify Git installation
     script:
         - git clone https://github.com/N5GEH/n5geh.platform.git
-        - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD $CI_REGISTRY
+        - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
         - docker-compose -f ./n5geh.platform/v2/docker-compose.yml pull
         - docker-compose -f ./n5geh.platform/v2/docker-compose.yml up -d
         - docker ps
