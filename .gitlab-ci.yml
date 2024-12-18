@@ -59,7 +59,6 @@ py_unittest:
         - docker-compose -f ./n5geh.platform/v2/docker-compose.yml pull
         - docker-compose -f ./n5geh.platform/v2/docker-compose.yml up -d
         - docker ps
-        - curl http://docker:1026
         - pip install -r requirements.txt
         - python -m unittest discover --verbose -s "validation_tests" -p "test_*.py"
 
