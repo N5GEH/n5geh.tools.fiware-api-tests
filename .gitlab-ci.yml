@@ -12,6 +12,8 @@ transfer_images:
   variables:
     DOCKER_HOST: tcp://docker:2375/
     DOCKER_DRIVER: overlay2
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
     - docker pull fiware/orion:3.7.0
     - docker tag fiware/orion:3.7.0 jugit-registry.fz-juelich.de/iek-10/core-projects/fiware/fiware-api-tests/fiware/orion:3.7.0
