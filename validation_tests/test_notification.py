@@ -298,9 +298,12 @@ class TestDataModel(unittest.TestCase):
         time.sleep(3)
 
         self.cb_client.update_attribute_value(entity_id=standard_entity["id"],
-                                              attr_name="attribute1", value=104)
+                                              attr_name="attribute1", value=105)
         time.sleep(3)
+        self.cb_client.update_attribute_value(entity_id=standard_entity["id"],
+                                              attr_name="attribute1", value=104)
 
+        time.sleep(8)
         # check value
         self.assertEqual(sub_res["topic"], topic_json)
         expected_payload = json.loads(sub_res["payload"].decode())
@@ -336,11 +339,15 @@ class TestDataModel(unittest.TestCase):
                 "mqttCustom": {
                     "url": str(settings.MQTT_BROKER_URL_INTERNAL),
                     "topic": topic_ngsi,
-                    "ngsi": new_entity
+                    "ngsi": new_entity,
+                    "user": settings.MQTT_USERNAME,
+                    "passwd": settings.MQTT_PASSWORD,
+
                 }
             },
             "throttling": 0
         }
+       
         self.cb_client.post_subscription(subscription=Subscription(
             **notification_custom_mqtt_ngsi))
 
@@ -354,7 +361,7 @@ class TestDataModel(unittest.TestCase):
 
         self.cb_client.update_attribute_value(entity_id=standard_entity["id"],
                                               attr_name="attribute1", value=105)
-        time.sleep(3)
+        time.sleep(10)
 
         # check value
         self.assertEqual(sub_res["topic"], topic_ngsi)
