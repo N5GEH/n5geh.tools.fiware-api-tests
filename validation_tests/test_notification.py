@@ -6,10 +6,7 @@ Tests for mqtt notification based on
 """
 import json
 import time
-import unittest
-from functools import wraps
-from typing import Callable
-
+import pytest
 from filip.clients.ngsi_v2 import ContextBrokerClient
 from filip.models import FiwareHeader
 from filip.models.ngsi_v2.context import ContextEntity
@@ -18,6 +15,10 @@ from filip.utils.cleanup import clear_all
 from paho.mqtt.client import Client, CallbackAPIVersion
 
 from settings import settings
+
+# ##############################################################################
+# Constants and Configurations
+# ##############################################################################
 
 topic_default = "default/mqtt/notification"
 topic_auth = "default/mqtt/notification/auth"
@@ -41,384 +42,336 @@ standard_entity = {
 }
 
 
-def standard_test(
-        fiware_service: str,
-        fiware_servicepath: str,
-        cb_url: str = None,
-) -> Callable:
-    # clean up
-    fiware_header = FiwareHeader(service=fiware_service,
-                                 service_path=fiware_servicepath)
-    clear_all(fiware_header=fiware_header,
-              cb_url=cb_url)
+# ##############################################################################
+# Fixtures and Helper Functions
+# ##############################################################################
 
-    # initial entity
-    entity = ContextEntity(**standard_entity)
-    with ContextBrokerClient(url=cb_url, fiware_header=fiware_header) as cbc:
-        cbc.post_entity(entity=entity)
-
-    # wrapper
-    def decorator(func):
-        #  Wrapper function for the decorated function
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
-class TestDataModel(unittest.TestCase):
-
-    @standard_test(
-        fiware_service=settings.FIWARE_SERVICE,
-        fiware_servicepath=settings.FIWARE_SERVICEPATH,
-        cb_url=settings.CB_URL
+@pytest.fixture(scope="function")
+def cb_client():
+    """
+    Pytest fixture that sets up the test environment for each test function.
+    - Clears all previous entities and subscriptions.
+    - Creates a standard entity.
+    - Yields a ContextBrokerClient instance for the test.
+    """
+    fiware_header = FiwareHeader(
+        service=settings.FIWARE_SERVICE,
+        service_path=settings.FIWARE_SERVICEPATH
     )
-    def setUp(self) -> None:
-        self.fiware_header = FiwareHeader(
-            service=settings.FIWARE_SERVICE,
-            service_path=settings.FIWARE_SERVICEPATH,
-        )
+    # Clean up previous test runs
+    clear_all(fiware_header=fiware_header, cb_url=settings.CB_URL)
 
-        # Initial client
-        self.cb_client = ContextBrokerClient(url=settings.CB_URL,
-                                             fiware_header=self.fiware_header)
+    # Create a client for the test
+    client = ContextBrokerClient(url=settings.CB_URL, fiware_header=fiware_header)
 
-    @staticmethod
-    def mqtt_setup(host, port, topic,
-                   username=None, password=None,
-                   tls: bool = False):
-        sub_res = {
-            "topic": None,
-            "payload": None
-        }
+    # Post a standard entity for the test
+    entity = ContextEntity(**standard_entity)
+    client.post_entity(entity=entity)
 
-        def on_message(client, userdata, msg):
-            nonlocal sub_res
-            sub_res["payload"] = msg.payload
-            sub_res["topic"] = msg.topic
+    yield client
 
-        mqttc = Client(CallbackAPIVersion.VERSION2)
-        mqttc.on_message = on_message
-        if username:
-            mqttc.username_pw_set(username=username, password=password)
-        else:
-            mqttc.username_pw_set(username=settings.MQTT_USERNAME,
-                                  password=settings.MQTT_PASSWORD)
-        if tls:
-            mqttc.tls_set()
-        mqttc.connect(host=host,
-                      port=port)
-        mqttc.loop_start()
-        mqttc.subscribe(topic=topic)
-        return sub_res, mqttc
+    # Teardown: close client session
+    client.close()
 
-    def test_default_notification(self):
-        # post notification
-        notification_default_mqtt = {
-            "description": "MQTT Command notification",
-            "subject": {
-                "entities": [
-                    {
-                        "id": standard_entity["id"]
-                    }
-                ],
-                "condition": {
-                    "attrs": ["attribute1"]
-                }
-            },
-            "notification": {
-                "mqtt": {
-                    "url": settings.MQTT_BROKER_URL_INTERNAL,
-                    "topic": topic_default
-                }
-            },
-            "throttling": 0
-        }
-        if settings.MQTT_USERNAME:
-            notification_default_mqtt["notification"][
-                "mqtt"]["user"] = settings.MQTT_USERNAME
-            notification_default_mqtt["notification"][
-                "mqtt"]["passwd"] = settings.MQTT_PASSWORD
-        self.cb_client.post_subscription(subscription=Subscription(
-            **notification_default_mqtt))
 
-        # update value
-        # self.mqtt_start()
-        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL.host,
-                                         port=settings.MQTT_BROKER_URL.port,
-                                         topic=topic_default,
-                                         tls=settings.MQTT_TLS
-                                         )
-        time.sleep(10)
+def mqtt_setup(host, port, topic,
+               username=None, password=None,
+               tls: bool = False):
+    """
+    Helper function to set up an MQTT client to listen for notifications.
+    """
+    sub_res = {
+        "topic": None,
+        "payload": None
+    }
 
-        self.cb_client.update_attribute_value(entity_id=standard_entity["id"],
-                                              attr_name="attribute1", value=101)
-        time.sleep(8)
+    def on_message(client, userdata, msg):
+        nonlocal sub_res
+        sub_res["payload"] = msg.payload
+        sub_res["topic"] = msg.topic
 
-        # check value
-        self.assertEqual(sub_res["topic"], topic_default)
-        expected_payload = json.loads(sub_res["payload"].decode())
-        self.assertEqual(expected_payload["data"][0]["attribute1"]["value"], 101)
-        mqttc.loop_stop()
-        mqttc.disconnect()
+    mqttc = Client(CallbackAPIVersion.VERSION2)
+    mqttc.on_message = on_message
+    if username:
+        mqttc.username_pw_set(username=username, password=password)
+    else:
+        mqttc.username_pw_set(username=settings.MQTT_USERNAME,
+                              password=settings.MQTT_PASSWORD)
+    if tls:
+        mqttc.tls_set()
 
-    def test_default_notification_auth(self):
-        # post notification
-        notification_auth_mqtt = {
-            "description": "MQTT Command notification",
-            "subject": {
-                "entities": [
-                    {
-                        "id": standard_entity["id"]
-                    }
-                ],
-                "condition": {
-                    "attrs": ["attribute1"]
-                }
-            },
-            "notification": {
-                "mqtt": {
-                    "url": "mqtt://test.mosquitto.org:1884",
-                    "topic": topic_auth,
-                    "user": "rw",
-                    "passwd": "readwrite"  # https://test.mosquitto.org/
-                }
-            },
-            "throttling": 0
-        }
-        self.cb_client.post_subscription(subscription=Subscription(
-            **notification_auth_mqtt))
+    mqttc.connect(host=host, port=port)
+    mqttc.loop_start()
+    mqttc.subscribe(topic=topic)
+    return sub_res, mqttc
 
-        # update value
-        sub_res, mqttc = self.mqtt_setup(host="test.mosquitto.org",
-                                         port=1884,
-                                         topic=topic_auth,
-                                         username="rw",
-                                         password="readwrite",
-                                         tls=False)
-        time.sleep(3)
-        self.cb_client.update_attribute_value(entity_id=standard_entity["id"],
-                                              attr_name="attribute1", value=102)
-        time.sleep(3)
 
-        # check value
-        self.assertEqual(sub_res["topic"], topic_auth)
-        expected_payload = json.loads(sub_res["payload"].decode())
-        self.assertEqual(expected_payload["data"][0]["attribute1"]["value"], 102)
-        mqttc.loop_stop()
-        mqttc.disconnect()
-
-    # test custom notification with payload
-    # topic = "custom/mqtt/notification/payload"
-    # "payload": "attribute1: ${attribute1}"
-    def test_custom_notification_payload(self):
-        # post notification
-        notification_custom_mqtt = {
-            "description": "MQTT Command notification",
-            "subject": {
-                "entities": [
-                    {
-                        "id": standard_entity["id"]
-                    }
-                ],
-                "condition": {
-                    "attrs": ["attribute1"]
-                }
-            },
-            "notification": {
-                "mqttCustom": {
-                    "url": settings.MQTT_BROKER_URL_INTERNAL,
-                    "topic": topic_payload,
-                    "payload": "attribute1: ${attribute1}"
-                }
-            },
-            "throttling": 0
-        }
-        self.cb_client.post_subscription(subscription=Subscription(
-            **notification_custom_mqtt))
-
-        # update value
-        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL.host,
-                                         port=settings.MQTT_BROKER_URL.port,
-                                         topic=topic_payload,
-                                         tls=settings.MQTT_TLS
-                                         )
-        time.sleep(3)
-
-        self.cb_client.update_attribute_value(entity_id=standard_entity["id"],
-                                              attr_name="attribute1", value=103)
-        time.sleep(3)
-
-        # check value
-        self.assertEqual(sub_res["topic"], topic_payload)
-        expected_payload = sub_res["payload"].decode()
-        self.assertEqual(expected_payload, "attribute1: 103")
-        mqttc.loop_stop()
-        mqttc.disconnect()
-
-    # test custom notification with json
-    # topic = "custom/mqtt/notification/json"
-    def test_custom_notification_json(self):
-        # post notification
-        notification_custom_mqtt_json = {
-            "description": "MQTT Command notification",
-            "subject": {
-                "entities": [
-                    {
-                        "id": standard_entity["id"]
-                    }
-                ],
-                "condition": {
-                    "attrs": ["attribute1"]
-                }
-            },
-            "notification": {
-                "mqttCustom": {
-                    "url": str(settings.MQTT_BROKER_URL_INTERNAL),
-                    "topic": topic_json,
-                    "json": {
-                        "attribute1": "${attribute1}"
-                    }
-                }
-            },
-            "throttling": 0
-        }
-        self.cb_client.post_subscription(subscription=Subscription(
-            **notification_custom_mqtt_json))
-
-        # update value
-        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL.host,
-                                         port=settings.MQTT_BROKER_URL.port,
-                                         topic=topic_json,
-                                         tls=settings.MQTT_TLS
-                                         )
-        time.sleep(3)
-
-        self.cb_client.update_attribute_value(entity_id=standard_entity["id"],
-                                              attr_name="attribute1", value=104)
-        time.sleep(3)
-
-        # check value
-        self.assertEqual(sub_res["topic"], topic_json)
-        expected_payload = json.loads(sub_res["payload"].decode())
-        self.assertEqual(expected_payload["attribute1"], 104)
-        mqttc.loop_stop()
-        mqttc.disconnect()
-
-    # test custom notification with ngsi
-    # topic = "custom/mqtt/notification/ngsi"
-    def test_custom_notification_ngsi(self):
-        new_entity = {
-            "id": "newId",
-            "type": "newType",
-            "attribute_ngsi": {
-                "value": "${attribute1}",
-                "type": "Number"
+# ##############################################################################
+# Tests
+# ##############################################################################
+@pytest.mark.order(1)
+def test_default_notification(cb_client: ContextBrokerClient):
+    """
+    Tests the default NGSIv2 notification format via MQTT.
+    """
+    notification_default_mqtt = {
+        "description": "MQTT Command notification",
+        "subject": {
+            "entities": [{"id": standard_entity["id"]}],
+            "condition": {"attrs": ["attribute1"]}
+        },
+        "notification": {
+            "mqtt": {
+                "url": settings.MQTT_BROKER_URL_INTERNAL,
+                "topic": topic_default
             }
+        },
+        "throttling": 0
+    }
+    if settings.MQTT_USERNAME:
+        notification_default_mqtt["notification"]["mqtt"]["user"] = settings.MQTT_USERNAME
+        notification_default_mqtt["notification"]["mqtt"]["passwd"] = settings.MQTT_PASSWORD
+
+    cb_client.post_subscription(subscription=Subscription(**notification_default_mqtt))
+
+    sub_res, mqttc = mqtt_setup(
+        host=settings.MQTT_BROKER_URL.host,
+        port=settings.MQTT_BROKER_URL.port,
+        topic=topic_default,
+        tls=settings.MQTT_TLS
+    )
+    time.sleep(3)  # wait for subscription to settle
+
+    cb_client.update_attribute_value(entity_id=standard_entity["id"], attr_name="attribute1", value=101)
+    time.sleep(3)  # wait for notification
+
+    assert sub_res["topic"] == topic_default
+    received_payload = json.loads(sub_res["payload"].decode())
+    assert received_payload["data"][0]["attribute1"]["value"] == 101
+
+    mqttc.loop_stop()
+    mqttc.disconnect()
+
+@pytest.mark.order(2)
+def test_default_notification_auth(cb_client: ContextBrokerClient):
+    """
+    Tests MQTT notification to a broker requiring authentication.
+    """
+    notification_auth_mqtt = {
+        "description": "MQTT Command notification",
+        "subject": {
+            "entities": [{"id": standard_entity["id"]}],
+            "condition": {"attrs": ["attribute1"]}
+        },
+        "notification": {
+            "mqtt": {
+                "url": "mqtt://test.mosquitto.org:1884",
+                "topic": topic_auth,
+                "user": "rw",
+                "passwd": "readwrite"  # https://test.mosquitto.org/
+            }
+        },
+        "throttling": 0
+    }
+    cb_client.post_subscription(subscription=Subscription(**notification_auth_mqtt))
+
+    sub_res, mqttc = mqtt_setup(
+        host="test.mosquitto.org",
+        port=1884,
+        topic=topic_auth,
+        username="rw",
+        password="readwrite",
+        tls=False
+    )
+    time.sleep(3)
+
+    cb_client.update_attribute_value(entity_id=standard_entity["id"], attr_name="attribute1", value=102)
+    time.sleep(3)
+
+    assert sub_res["topic"] == topic_auth
+    received_payload = json.loads(sub_res["payload"].decode())
+    assert received_payload["data"][0]["attribute1"]["value"] == 102
+
+    mqttc.loop_stop()
+    mqttc.disconnect()
+
+@pytest.mark.order(3)
+def test_custom_notification_payload(cb_client: ContextBrokerClient):
+    """
+    Tests custom MQTT notification with a simple string payload.
+    """
+    notification_custom_mqtt = {
+        "description": "MQTT Command notification",
+        "subject": {
+            "entities": [{"id": standard_entity["id"]}],
+            "condition": {"attrs": ["attribute1"]}
+        },
+        "notification": {
+            "mqttCustom": {
+                "url": settings.MQTT_BROKER_URL_INTERNAL,
+                "topic": topic_payload,
+                "payload": "attribute1: ${attribute1}"
+            }
+        },
+        "throttling": 0
+    }
+    cb_client.post_subscription(subscription=Subscription(**notification_custom_mqtt))
+
+    sub_res, mqttc = mqtt_setup(
+        host=settings.MQTT_BROKER_URL.host,
+        port=settings.MQTT_BROKER_URL.port,
+        topic=topic_payload,
+        tls=settings.MQTT_TLS
+    )
+    time.sleep(3)
+
+    cb_client.update_attribute_value(entity_id=standard_entity["id"], attr_name="attribute1", value=103)
+    time.sleep(3)
+
+    assert sub_res["topic"] == topic_payload
+    assert sub_res["payload"].decode() == "attribute1: 103"
+
+    mqttc.loop_stop()
+    mqttc.disconnect()
+
+@pytest.mark.order(4)
+def test_custom_notification_json(cb_client: ContextBrokerClient):
+    """
+    Tests custom MQTT notification with a JSON payload.
+    """
+    notification_custom_mqtt_json = {
+        "description": "MQTT Command notification",
+        "subject": {
+            "entities": [{"id": standard_entity["id"]}],
+            "condition": {"attrs": ["attribute1"]}
+        },
+        "notification": {
+            "mqttCustom": {
+                "url": str(settings.MQTT_BROKER_URL_INTERNAL),
+                "topic": topic_json,
+                "json": {"attribute1": "${attribute1}"}
+            }
+        },
+        "throttling": 0
+    }
+    cb_client.post_subscription(subscription=Subscription(**notification_custom_mqtt_json))
+
+    sub_res, mqttc = mqtt_setup(
+        host=settings.MQTT_BROKER_URL.host,
+        port=settings.MQTT_BROKER_URL.port,
+        topic=topic_json,
+        tls=settings.MQTT_TLS
+    )
+    time.sleep(3)
+
+    cb_client.update_attribute_value(entity_id=standard_entity["id"], attr_name="attribute1", value=104)
+    time.sleep(3)
+
+    assert sub_res["topic"] == topic_json
+    received_payload = json.loads(sub_res["payload"].decode())
+    assert received_payload["attribute1"] == 104
+
+    mqttc.loop_stop()
+    mqttc.disconnect()
+
+@pytest.mark.order(5)
+def test_custom_notification_ngsi(cb_client: ContextBrokerClient):
+    """
+    Tests custom MQTT notification with a transformed NGSI payload.
+    """
+    new_entity = {
+        "id": "newId",
+        "type": "newType",
+        "attribute_ngsi": {
+            "value": "${attribute1}",
+            "type": "Number"
         }
-        # post notification
-        notification_custom_mqtt_ngsi = {
-            "description": "MQTT Command notification",
-            "subject": {
-                "entities": [
-                    {
-                        "id": standard_entity["id"]
-                    }
-                ],
-                "condition": {
-                    "attrs": ["attribute1"]
-                }
-            },
-            "notification": {
-                "mqttCustom": {
-                    "url": str(settings.MQTT_BROKER_URL_INTERNAL),
-                    "topic": topic_ngsi,
-                    "ngsi": new_entity
-                }
-            },
-            "throttling": 0
-        }
-        self.cb_client.post_subscription(subscription=Subscription(
-            **notification_custom_mqtt_ngsi))
+    }
+    notification_custom_mqtt_ngsi = {
+        "description": "MQTT Command notification",
+        "subject": {
+            "entities": [{"id": standard_entity["id"]}],
+            "condition": {"attrs": ["attribute1"]}
+        },
+        "notification": {
+            "mqttCustom": {
+                "url": str(settings.MQTT_BROKER_URL_INTERNAL),
+                "topic": topic_ngsi,
+                "ngsi": new_entity
+            }
+        },
+        "throttling": 0
+    }
+    cb_client.post_subscription(subscription=Subscription(**notification_custom_mqtt_ngsi))
 
-        # update value
-        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL.host,
-                                         port=settings.MQTT_BROKER_URL.port,
-                                         topic=topic_ngsi,
-                                         tls=settings.MQTT_TLS
-                                         )
-        time.sleep(3)
+    sub_res, mqttc = mqtt_setup(
+        host=settings.MQTT_BROKER_URL.host,
+        port=settings.MQTT_BROKER_URL.port,
+        topic=topic_ngsi,
+        tls=settings.MQTT_TLS
+    )
+    time.sleep(3)
 
-        self.cb_client.update_attribute_value(entity_id=standard_entity["id"],
-                                              attr_name="attribute1", value=105)
-        time.sleep(3)
+    cb_client.update_attribute_value(entity_id=standard_entity["id"], attr_name="attribute1", value=105)
+    time.sleep(3)
 
-        # check value
-        self.assertEqual(sub_res["topic"], topic_ngsi)
-        expected_payload = json.loads(sub_res["payload"].decode())
-        self.assertEqual(expected_payload["data"][0]["id"], new_entity["id"])
-        self.assertEqual(expected_payload["data"][0]["type"], new_entity["type"])
-        self.assertEqual(expected_payload["data"][0]["attribute_ngsi"]["value"], 105)
-        mqttc.loop_stop()
-        mqttc.disconnect()
+    assert sub_res["topic"] == topic_ngsi
+    received_payload = json.loads(sub_res["payload"].decode())
+    assert received_payload["data"][0]["id"] == new_entity["id"]
+    assert received_payload["data"][0]["type"] == new_entity["type"]
+    assert received_payload["data"][0]["attribute_ngsi"]["value"] == 105
 
-    # test custom notification with dynamic topic
-    # more entities
-    # topic = "custom/mqtt/notification/dynamic/#"
-    def test_custom_notification_dynamic_topic(self):
-        # create entities
-        for i in range(3):
-            standard_entity["id"] = f"Entity:{i}"
-            standard_entity["type"] = f"Type{i}"
-            self.cb_client.post_entity(ContextEntity(**standard_entity))
-        # post notification
-        notification_custom_mqtt_dynamic_topic = {
-            "description": "MQTT Command notification",
-            "subject": {
-                "entities": [
-                    {
-                        "idPattern": ".*"
-                    }
-                ],
-                "condition": {
-                    "attrs": ["attribute1"]
-                }
-            },
-            "notification": {
-                "mqttCustom": {
-                    "url": settings.MQTT_BROKER_URL_INTERNAL,
-                    "topic": topic_dynamic + "/${type}" + "/${id}",
-                }
-            },
-            "throttling": 0
-        }
-        self.cb_client.post_subscription(subscription=Subscription(
-            **notification_custom_mqtt_dynamic_topic))
+    mqttc.loop_stop()
+    mqttc.disconnect()
 
-        # update value
-        sub_res, mqttc = self.mqtt_setup(host=settings.MQTT_BROKER_URL.host,
-                                         port=settings.MQTT_BROKER_URL.port,
-                                         topic=topic_dynamic + "/#",
-                                         tls=settings.MQTT_TLS
-                                         )
-        time.sleep(3)
-        for i in range(3):
-            self.cb_client.update_attribute_value(entity_id=f"Entity:{i}",
-                                                  attr_name="attribute1", value=106)
-            time.sleep(3)
-            # check value
-            self.assertEqual(sub_res["topic"], topic_dynamic + f"/Type{i}" + f"/Entity:{i}")
-            expected_payload = json.loads(sub_res["payload"].decode())
-            self.assertEqual(expected_payload["data"][0]["id"], f"Entity:{i}")
-            self.assertEqual(expected_payload["data"][0]["type"], f"Type{i}")
-            self.assertEqual(expected_payload["data"][0]["attribute1"]["value"], 106)
-            time.sleep(3)
-        mqttc.loop_stop()
-        mqttc.disconnect()
+@pytest.mark.order(6)
+def test_custom_notification_dynamic_topic(cb_client: ContextBrokerClient):
+    """
+    Tests custom MQTT notification with a dynamic topic based on entity attributes.
+    """
+    # Create additional entities for this test
+    for i in range(3):
+        entity_payload = standard_entity.copy()
+        entity_payload["id"] = f"Entity:{i}"
+        entity_payload["type"] = f"Type{i}"
+        cb_client.post_entity(ContextEntity(**entity_payload))
 
+    notification_custom_mqtt_dynamic_topic = {
+        "description": "MQTT Command notification",
+        "subject": {
+            "entities": [{"idPattern": ".*"}],
+            "condition": {"attrs": ["attribute1"]}
+        },
+        "notification": {
+            "mqttCustom": {
+                "url": settings.MQTT_BROKER_URL_INTERNAL,
+                "topic": topic_dynamic + "/${type}/${id}",
+            }
+        },
+        "throttling": 0
+    }
+    cb_client.post_subscription(subscription=Subscription(**notification_custom_mqtt_dynamic_topic))
 
-if __name__ == "__main__":
-    unittest.main()
+    sub_res, mqttc = mqtt_setup(
+        host=settings.MQTT_BROKER_URL.host,
+        port=settings.MQTT_BROKER_URL.port,
+        topic=topic_dynamic + "/#",
+        tls=settings.MQTT_TLS
+    )
+    time.sleep(3)
+
+    for i in range(3):
+        entity_id = f"Entity:{i}"
+        entity_type = f"Type{i}"
+        cb_client.update_attribute_value(entity_id=entity_id, attr_name="attribute1", value=106)
+        time.sleep(3)  # Wait for this specific notification
+
+        # Check value for each update
+        assert sub_res["topic"] == f"{topic_dynamic}/{entity_type}/{entity_id}"
+        received_payload = json.loads(sub_res["payload"].decode())
+        assert received_payload["data"][0]["id"] == entity_id
+        assert received_payload["data"][0]["type"] == entity_type
+        assert received_payload["data"][0]["attribute1"]["value"] == 106
+
+    mqttc.loop_stop()
+    mqttc.disconnect()
