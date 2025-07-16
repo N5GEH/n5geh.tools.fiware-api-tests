@@ -26,7 +26,6 @@ topic_payload = "custom/mqtt/notification/payload"
 topic_json = "custom/mqtt/notification/json"
 topic_ngsi = "custom/mqtt/notification/ngsi"
 topic_dynamic = "custom/mqtt/notification/dynamic"
-topics = [topic_default, topic_auth, topic_payload, topic_json, topic_ngsi, topic_dynamic]
 standard_entity = {
     "id": "Entity:001",
     "type": "Entity",
@@ -93,7 +92,7 @@ def cb_client():
         service_path=settings.FIWARE_SERVICEPATH
     )
     # Clean up previous test runs
-    # clear_all(fiware_header=fiware_header, cb_url=settings.CB_URL)
+    clear_all(fiware_header=fiware_header, cb_url=settings.CB_URL)
 
     # Create a client for the test
     client = ContextBrokerClient(url=settings.CB_URL, fiware_header=fiware_header)
@@ -360,6 +359,8 @@ def test_custom_notification_ngsi(cb_client: ContextBrokerClient):
         "notification": {
             "mqttCustom": {
                 "url": str(settings.MQTT_BROKER_URL_INTERNAL),
+                "user": settings.MQTT_USERNAME,
+                "passwd": settings.MQTT_PASSWORD,
                 "topic": topic_ngsi,
                 "ngsi": new_entity
             }
@@ -368,10 +369,10 @@ def test_custom_notification_ngsi(cb_client: ContextBrokerClient):
     }
     cb_client.post_subscription(subscription=Subscription(**notification_custom_mqtt_ngsi))
 
-    time.sleep(10)
+    time.sleep(5)
 
     cb_client.update_attribute_value(entity_id=standard_entity["id"], attr_name="attribute1", value=105)
-    time.sleep(10)
+    time.sleep(15)
 
     assert sub_res["topic"] == topic_ngsi
     received_payload = json.loads(sub_res["payload"].decode())
