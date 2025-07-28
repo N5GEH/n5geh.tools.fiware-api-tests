@@ -41,7 +41,7 @@ postman_tests:
 
 python_tests:
   stage: test
-  image: judock.fz-juelich.de/docker/alpine:latest
+  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/python:3.10
   services:
     - !reference [.fiware-services, services]
   before_script:
