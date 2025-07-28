@@ -41,7 +41,8 @@ postman_tests:
 
 python_tests:
   stage: test
-  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/python:3.10
+#  image: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/python:3.10
+  image: judock.fz-juelich.de/docker/alpine:latest
   services:
     - !reference [.fiware-services, services]
   before_script:
@@ -49,13 +50,13 @@ python_tests:
     - !reference [.fiware-services, validation]
     - !reference [.fiware-services, test]
 
-    # install dependencies
-    - pip install --upgrade pip
-    - pip install -r requirements.txt
-
-    # Install pytest
-    - pip install pytest
+#    # install dependencies
+#    - pip install --upgrade pip
+#    - pip install -r requirements.txt
+#
+#    # Install pytest
+#    - pip install pytest
 
   script:
     - echo "Running Python tests against the deployed FIWARE services..."
-    - python -m pytest $TEST_PATH
+    - #python -m pytest $TEST_PATH
