@@ -1,5 +1,6 @@
 
 stages:
+  - test
   - postman
 
 .mqtt_user: &mqtt_user "test_user"
