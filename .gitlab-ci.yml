@@ -49,14 +49,12 @@ python_tests:
     # test fiware environment
     - !reference [.fiware-services, validation]
     - !reference [.fiware-services, test]
+    # install dependencies
+    # - pip install --upgrade pip
+    # - pip install -r requirements.txt
 
-#    # install dependencies
-#    - pip install --upgrade pip
-#    - pip install -r requirements.txt
-#
-#    # Install pytest
-#    - pip install pytest
-
+    # Install pytest
+    # - pip install pytest
   script:
     - echo "Running Python tests against the deployed FIWARE services..."
-    - #python -m pytest $TEST_PATH
+    # - python -m pytest $TEST_PATH
