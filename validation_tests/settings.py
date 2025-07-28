@@ -18,8 +18,6 @@ class TestSettings(BaseSettings):
                                                              'CB_HOST',
                                                              'CONTEXTBROKER_URL',
                                                              'OCB_URL'))
-    IOTA_URL: AnyHttpUrl = Field(default="http://localhost:4041",
-                                 validation_alias='IOTA_URL')
     IOTA_JSON_URL: AnyHttpUrl = Field(default="http://localhost:4041",
                                       validation_alias='IOTA_JSON_URL')
 
@@ -47,13 +45,8 @@ class TestSettings(BaseSettings):
     MQTT_TLS: Optional[str] = Field(default=None,
                                     validation_alias=AliasChoices('MQTT_TLS'))
 
-    # IF CI_JOB_ID is present it will always overwrite the service path
-    # TODO might not necessary
-    CI_JOB_ID: Optional[str] = Field(default=None,
-                                     validation_alias=AliasChoices('CI_JOB_ID'))
-
     # create service paths for multi tenancy scenario and concurrent testing
-    FIWARE_SERVICE: str = Field(default="filip",
+    FIWARE_SERVICE: str = Field(default="fiware_api_test",
                                 validation_alias=AliasChoices('FIWARE_SERVICE'))
 
     FIWARE_SERVICEPATH: str = Field(default="/",
