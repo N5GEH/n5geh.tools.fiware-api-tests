@@ -350,10 +350,6 @@ def test_custom_notification_ngsi(cb_client: ContextBrokerClient):
     mqttc.loop_stop()
     mqttc.disconnect()
 
-# TODO
-#  - The mqtt client is shared across subs
-#  - The mqtt client is not closed after removing the subscription (cannot be reproduced)
-#  - The latency between JointCluster (cannot be reproduced)
 @pytest.mark.order(6)
 def test_custom_notification_dynamic_topic(cb_client: ContextBrokerClient):
     """
