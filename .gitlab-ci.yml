@@ -2,6 +2,29 @@
 stages:
   - postman
 
+.mqtt_user: &mqtt_user "test_user"
+.mqtt_pass: &mqtt_pass "test_secret"
+
+# For CI Components `variables` need to be set globally,
+# otherwise they can be added to the specific job directly
+variables:
+  TEST_PATH: "validation_tests" # Path to the tests to run
+  FF_NETWORK_PER_BUILD: 1 # Create a network for each job: https://docs.gitlab.com/runner/executors/docker/#create-a-network-for-each-job
+  # CI_DEBUG_SERVICES: 1 # Enable logging of services
+
+  MQTT_USER: *mqtt_user
+  MQTT_PASS: *mqtt_pass
+
+
+include:
+  - project: iek-10/public/developer-tools/gitlab-ci-templates
+    ref: main
+    file:
+      - services/fiware-services.yml
+    inputs:
+      mqtt_user: *mqtt_user
+      mqtt_pass: *mqtt_pass
+
 postman_tests:
     stage: postman
     image: alpine:latest
@@ -14,3 +37,24 @@ postman_tests:
     script:
         - newman run postman/test_entity_update.postman_collection.json
         - newman run postman/test_quantumleap_subscriptions.postman_collection.json
+
+python_tests:
+  stage: test
+  image: judock.fz-juelich.de/docker/alpine:latest
+  services:
+    - !reference [.fiware-services, services]
+  before_script:
+    # test fiware environment
+    - !reference [.fiware-services, validation]
+    - !reference [.fiware-services, test]
+
+    # install dependencies
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+
+    # Install pytest
+    - pip install pytest
+
+  script:
+    - echo "Running Python tests against the deployed FIWARE services..."
+    - python -m pytest $TEST_PATH
