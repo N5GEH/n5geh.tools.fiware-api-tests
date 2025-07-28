@@ -25,6 +25,7 @@ include:
     inputs:
       mqtt_user: *mqtt_user
       mqtt_pass: *mqtt_pass
+      iotagentjson_image_tag: ${CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX}/fiware/iotagent-json:1.26.0
 
 postman_tests:
     stage: postman

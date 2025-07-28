@@ -13,7 +13,10 @@ from copy import deepcopy
 
 from settings import settings
 
-path_input = "inputs/test_data_model"
+# get current working directory
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# set the path to the input directory
+path_input = os.path.join(current_dir, 'inputs', 'test_data_model')
 
 standard_entity = {
     "id": "Entity:001",
