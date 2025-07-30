@@ -48,7 +48,9 @@ python_tests:
     - !reference [.fiware-services, services]
   before_script:
     # test fiware environment
-    # - !reference [.fiware-services, validation]
+    - echo "Checking availability of nc"
+    - nc
+    - !reference [.fiware-services, validation]
     # - !reference [.fiware-services, test]
 
     # install python and pip
