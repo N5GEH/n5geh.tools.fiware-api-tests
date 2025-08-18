@@ -1,17 +1,10 @@
-import time
+
 import unittest
-import json
-import os.path
-from functools import wraps
-from typing import Callable
-from paho.mqtt.client import Client
+
+from paho.mqtt.client import Client, CallbackAPIVersion
 from filip.clients.ngsi_v2 import ContextBrokerClient, IoTAClient
 from filip.models import FiwareHeader
-from filip.models.ngsi_v2.context import ContextEntity, NamedContextAttribute
-from filip.models.ngsi_v2.iot import Device, ServiceGroup, DeviceAttribute
-from filip.utils.cleanup import clear_all, clean_test
-from requests import HTTPError
-from copy import deepcopy
+from filip.utils.cleanup import clear_all
 
 from settings import settings
 
@@ -89,7 +82,7 @@ class TestAutoprovisioning(unittest.TestCase):
         self.iotc = IoTAClient(url=settings.IOTA_JSON_URL,
                                fiware_header=self.fiware_header)
 
-        self.mqttc = Client()
+        self.mqttc = Client(callback_api_version=CallbackAPIVersion.VERSION2)
         self.mqttc.username_pw_set(username=settings.MQTT_USERNAME,
                                    password=settings.MQTT_PASSWORD)
         if settings.MQTT_TLS:
@@ -98,7 +91,15 @@ class TestAutoprovisioning(unittest.TestCase):
                            port=settings.MQTT_BROKER_URL.port)
 
         # TODO: clean up
+
+        clear_all(fiware_header=self.fiware_header,
+                  cb_url=settings.CB_URL,
+                  iota_url=settings.IOTA_JSON_URL,
+                  ql_url=settings.QL_URL,)
+
         # TODO: Create service group
+
+
 
     def test_autoprovision(self):
 
