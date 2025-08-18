@@ -92,10 +92,10 @@ class TestAutoprovisioning(unittest.TestCase):
 
         # TODO: clean up
 
-        clear_all(fiware_header=self.fiware_header,
-                  cb_url=settings.CB_URL,
-                  iota_url=settings.IOTA_JSON_URL,
-                  ql_url=settings.QL_URL,)
+        # clear_all(fiware_header=self.fiware_header,
+        #           cb_url=settings.CB_URL,
+        #           iota_url=settings.IOTA_JSON_URL,
+        #           ql_url=settings.QL_URL,)
 
         # TODO: Create service group
 
