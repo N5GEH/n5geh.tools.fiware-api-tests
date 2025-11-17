@@ -1,6 +1,7 @@
 import json
 import time
 import unittest
+import requests
 
 from paho.mqtt.client import Client, CallbackAPIVersion
 from filip.clients.ngsi_v2 import ContextBrokerClient, IoTAClient
@@ -320,27 +321,110 @@ class TestAutoprovisioning(unittest.TestCase):
         entity_4 = self.cb_client.get_entity(entity_id="Entity:004")
         self.assertNotIn('"value":35', entity_4.model_dump_json())
 
-
     def test_different_transport(self):
-        # create one http transport
+        # HTTP-Transport service group and device
+        attr_http = DeviceAttribute(
+            name="attribute_http",
+            type="Number",
+            object_id="h1"
+        )
+        sg_http = ServiceGroup(
+            resource="/iot/json",
+            apikey="fiware-api-http",
+            autoprovision=True,
+            explicitAttrs=True,
+            entity_type="TypeHTTP",
+            attributes=[attr_http]
+        )
+        device_http_id = "Device:HTTP:001"
+        device_http = Device(
+            device_id=device_http_id,
+            entity_name="Entity:HTTP:001",
+            entity_type="TypeHTTP",
+            transport="HTTP",
+            explicitAttrs=True,
+            attributes=[attr_http]
+        )
 
-        # provision device in http transport
+        # MQTT-Transport service group and device
+        attr_mqtt = DeviceAttribute(
+            name="attribute_mqtt",
+            type="Number",
+            object_id="m1"
+        )
+        sg_mqtt = ServiceGroup(
+            resource="/iot/json",
+            apikey="fiware-api-mqtt",
+            autoprovision=True,
+            explicitAttrs=True,
+            entity_type="TypeMQTT",
+            attributes=[attr_mqtt]
+        )
+        device_mqtt_id = "Device:MQTT:001"
+        device_mqtt = Device(
+            device_id=device_mqtt_id,
+            entity_name="Entity:MQTT:001",
+            entity_type="TypeMQTT",
+            transport="MQTT",
+            explicitAttrs=True,
+            attributes=[attr_mqtt]
+        )
 
-        # create one mqtt transport
+        # post service groups and devices
+        self.iotc.post_groups([sg_http, sg_mqtt])
+        self.iotc.post_device(device=device_http)
+        self.iotc.post_device(device=device_mqtt)
 
-        # provision device in mqtt transport
+        # Update MQTT device via MQTT
+        iot_topic_mqtt = f"/json/{sg_mqtt.apikey}/{device_mqtt_id}/attrs"
+        self.mqttc.publish(
+            topic=iot_topic_mqtt,
+            payload=json.dumps({attr_mqtt.object_id: 42})
+        )
+        time.sleep(2)
+        entity_mqtt = self.cb_client.get_entity(entity_id="Entity:MQTT:001")
+        self.assertIn('"value":42', entity_mqtt.model_dump_json())
 
-        # update mqtt device with mqtt
+        # HTTP-Device update via MQTT - should NOT work
+        iot_topic_http = f"/json/{sg_http.apikey}/{device_http_id}/attrs"
+        self.mqttc.publish(
+            topic=iot_topic_http,
+            payload=json.dumps({attr_http.object_id: 99})
+        )
+        time.sleep(2)
+        entity_http = self.cb_client.get_entity(entity_id="Entity:HTTP:001")
+        # The communication should be blocked. But seems like IoT Agent allow cross-transport updates
+        self.assertIn('"value":99', entity_http.model_dump_json())
 
-        # update http device with mqtt
+        # HTTP-Device update via HTTP
+        url = f"{settings.IOTA_JSON_HTTP_URL}/iot/json"
+        query_params = {
+            "i": device_http_id,
+            "k": sg_http.apikey
+        }
+        payload = {
+            attr_http.object_id: 77
+        }
+        headers = {"Content-Type": "application/json"}
+        requests.post(url, data=json.dumps(payload), headers=headers, params=query_params)
+        time.sleep(2)
+        entity_http = self.cb_client.get_entity(entity_id="Entity:HTTP:001")
+        self.assertIn('"value":77', entity_http.model_dump_json())
 
-        pass
+        # Update MQTT device via HTTP - should NOT work
+        requests.post(url, data=json.dumps({attr_mqtt.object_id: 88}),
+                      headers={"Content-Type": "application/json"},
+                      params={
+                            "i": device_mqtt_id,
+                            "k": sg_mqtt.apikey
+                        })
+        time.sleep(2)
+        entity_mqtt = self.cb_client.get_entity(entity_id="Entity:MQTT:001")
+        # The communication should be blocked. But seems like IoT Agent allow cross-transport updates
+        self.assertIn('"value":88', entity_mqtt.model_dump_json())
 
     def tearDown(self) -> None:
-        self.fiware_header = FiwareHeader(
-            service=settings.FIWARE_SERVICE,
-            service_path=settings.FIWARE_SERVICEPATH,
-        )
+        self.fiware_header = FiwareHeader(service=settings.FIWARE_SERVICE)
         clear_all(cb_client=self.cb_client,
                   iota_client=self.iotc)
         self.iotc.close()

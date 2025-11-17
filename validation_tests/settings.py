@@ -21,6 +21,9 @@ class TestSettings(BaseSettings):
     IOTA_JSON_URL: AnyHttpUrl = Field(default="http://localhost:4041",
                                       validation_alias='IOTA_JSON_URL')
 
+    IOTA_JSON_HTTP_URL: AnyHttpUrl = Field(default="http://localhost:7896",
+                                           validation_alias='IOTA_JSON_HTTP_URL')
+
     IOTA_UL_URL: AnyHttpUrl = Field(default="http://127.0.0.1:4061",
                                     validation_alias=AliasChoices('IOTA_UL_URL'))
 
