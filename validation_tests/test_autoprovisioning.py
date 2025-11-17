@@ -2,6 +2,7 @@ import json
 import time
 import unittest
 import requests
+from filip.models.ngsi_v2 import ContextEntity
 
 from paho.mqtt.client import Client, CallbackAPIVersion
 from filip.clients.ngsi_v2 import ContextBrokerClient, IoTAClient
@@ -210,6 +211,14 @@ class TestAutoprovisioning(unittest.TestCase):
         self.assertIn('"value":15', entity_1_new.model_dump_json())
 
     def test_cross_group_operation_without_autoprov(self):
+        """
+        Results:
+        - Device update with "wrong" API key, will not affect the settings in the service group. The settings of the
+            used service group will be applied.
+        - If autoprovision is disabled (false), initial message will not create a new entity/device
+        - If explicitAttrs is disabled (false), attributes not defined in the service group or device will not be
+            created. But if the entity/device already exists, updates to those attributes will still work.
+        """
         # test with without autoprovision
         attr4 = DeviceAttribute(
                     name="attribute4",
@@ -222,7 +231,7 @@ class TestAutoprovisioning(unittest.TestCase):
             entity_type="Type4",
             autoprovision=True,
             explicitAttrs=False,
-            # attributes=[attr4]
+            attributes=[attr4]
         )
         self.iotc.post_groups([sg4])
 
@@ -241,35 +250,9 @@ class TestAutoprovisioning(unittest.TestCase):
         )
         self.iotc.post_groups([sg5])
 
-        attr6 = DeviceAttribute(
-                    name="attribute6",
-                    type="Number",
-                    object_id="a6"
-                )
-        sg6 = ServiceGroup(
-            resource="/iot/json",
-            apikey="fiware-api-6",
-            entity_type="Type6",
-            autoprovision=False,
-            explicitAttrs=True,
-            attributes=[attr6]
-        )
-        self.iotc.post_groups([sg6])
-
-        # create device4
-        device4_id = "Device:004"
-        self.iotc.post_device(
-            device=Device(**{
-            "device_id": device4_id,
-            "entity_name": "Entity:004",
-            "entity_type": "Type4",
-            "transport": "MQTT",
-            "explicitAttrs": False,
-            "attributes": [attr4]
-        }))
-
-        # update device4 with wrong service group, explicitAttrs=False -> will work
-        iot_topic = f"/json/{sg5.apikey}/{device4_id}/attrs"
+        # update device with wrong group credentials
+        device_4_id = "Device:004"
+        iot_topic = f"/json/{sg5.apikey}/{device_4_id}/attrs"
         self.mqttc.publish(
             topic=iot_topic,
             payload=json.dumps({
@@ -278,12 +261,12 @@ class TestAutoprovisioning(unittest.TestCase):
         )
         # verify the results
         time.sleep(2)
-        entity_4 = self.cb_client.get_entity(entity_id="Entity:004")
-        self.assertIn('"value":20', entity_4.model_dump_json())
+        entity_4 = self.cb_client.get_entity_list(id_pattern=device_4_id)
+        self.assertEqual(len(entity_4), 0)
+        # self.assertIn('"value":20.0', entity_4[0].model_dump_json())
 
-        # add a new attribute with right service group, explicitAttrs=False -> TODO should work but currently not, since a patch request is sent
-        # TODO seems like undefined attribute can not be added
-        iot_topic = f"/json/{sg4.apikey}/{device4_id}/attrs"
+        device_5_id = "Device:005"
+        iot_topic = f"/json/{sg4.apikey}/{device_5_id}/attrs"
         self.mqttc.publish(
             topic=iot_topic,
             payload=json.dumps({
@@ -292,34 +275,41 @@ class TestAutoprovisioning(unittest.TestCase):
         )
         # verify the results
         time.sleep(2)
-        entity_4 = self.cb_client.get_entity(entity_id="Entity:004")
-        self.assertNotIn('"value":25', entity_4.model_dump_json())
+        entities_5 = self.cb_client.get_entity_list(id_pattern=device_5_id)
+        self.assertEqual(len(entities_5), 1)
+        self.assertNotIn('"value":25.0', entities_5[0].model_dump_json())
 
-        # update device4 attribute with wrong service group, explicitAttrs=True -> will work
-        iot_topic = f"/json/{sg6.apikey}/{device4_id}/attrs"
+        # test with provisioned entity
+        device_6_id = "Device:006"
+        attr6 = DeviceAttribute(
+                    name="attribute6",
+                    type="Number"
+                )
+        entity_6 = ContextEntity(
+            id=device_6_id,
+            type="Type6",
+            attribute6={"type": "Number", "value": 0}
+        )
+        self.cb_client.post_entity(entity_6)
+        device_6 = Device(
+            device_id=device_6_id,
+            entity_name=device_6_id,
+            entity_type="Type6",
+            transport="MQTT",
+            explicitAttrs=False
+        )
+        self.iotc.post_device(device=device_6)
+        iot_topic = f"/json/{sg4.apikey}/{device_6_id}/attrs"
         self.mqttc.publish(
             topic=iot_topic,
             payload=json.dumps({
-                attr4.object_id: 30
+                attr6.name: 30
             })
         )
         # verify the results
         time.sleep(2)
-        entity_4 = self.cb_client.get_entity(entity_id="Entity:004")
-        self.assertIn('"value":30', entity_4.model_dump_json())
-
-        # add a new attribute with wrong service group, explicitAttrs=True -> will NOT work
-        iot_topic = f"/json/{sg6.apikey}/{device4_id}/attrs"
-        self.mqttc.publish(
-            topic=iot_topic,
-            payload=json.dumps({
-                attr6.object_id: 35
-            })
-        )
-        # verify the results
-        time.sleep(2)
-        entity_4 = self.cb_client.get_entity(entity_id="Entity:004")
-        self.assertNotIn('"value":35', entity_4.model_dump_json())
+        entity_6_updated = self.cb_client.get_entity(entity_id=device_6_id)
+        self.assertIn('"value":30', entity_6_updated.model_dump_json())
 
     def test_different_transport(self):
         # HTTP-Transport service group and device
