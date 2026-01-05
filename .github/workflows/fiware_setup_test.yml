@@ -1,0 +1,49 @@
+name: Workflow to test the FIWARE setup action
+
+on:
+  push:
+    paths:
+      - '.github/actions/fiware/**'
+      - '.github/workflows/fiware_setup_test.yml'
+
+jobs:
+  fiware_setup_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+#      - name: Setup Docker Buildx
+#        uses: docker/setup-buildx-action@v3
+#      - name: Setup Docker Compose
+#        uses: docker/setup-docker-compose@v3
+      - name: Setup FIWARE Services
+        uses: ./.github/actions/fiware
+        with:
+          fiware-directory: .
+          healthcheck-urls: 'http://localhost:1026/version http://localhost:8668/version http://localhost:1027/version http://localhost:4041/'
+          timeout-seconds: 180
+          orion-version: '3.11.0'
+          mongo-db-version: '5.0.24'
+          iot-agent-json-version: '1.26.0'
+          iot-agent-ul-version: '1.23.0'
+          quantumleap-version: '1.0.0'
+          crate-version: '4.8.4'
+          orion-ld-version: '1.5.1'
+      - name: Show running containers
+        run: docker ps -a
+      - name: Show docker compose services
+        run: docker compose ps
+      - name: Show logs for Orion
+        run: docker compose logs --tail=50 orion
+      - name: Show logs for QuantumLeap
+        run: docker compose logs --tail=50 quantumleap
+      - name: Show logs for Orion-LD
+        run: docker compose logs --tail=50 orion-ld
+      - name: Show logs for IoT Agent JSON
+        run: docker compose logs --tail=50 iot-agent-json
+      - name: Show logs for IoT Agent UL
+        run: docker compose logs --tail=50 iot-agent-ul
+      - name: Show logs for MongoDB
+        run: docker compose logs --tail=50 mongo-db
+      - name: Show logs for CrateDB
+        run: docker compose logs --tail=50 crate
