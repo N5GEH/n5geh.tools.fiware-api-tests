@@ -88,8 +88,14 @@ runs:
         while [ $ELAPSED -lt $TIMEOUT ]; do
           ALL_UP=true
           for url in "${URL_ADDR[@]}"; do
-            if ! curl -sf -o /dev/null "$url"; then
-              echo "Waiting for $url..."
+            # Print the HTTP status and body for each health check
+            STATUS=$(curl -s -o /tmp/healthcheck_body -w "%{http_code}" "$url" || echo "000")
+            BODY=$(cat /tmp/healthcheck_body)
+            echo "Healthcheck for $url: HTTP $STATUS"
+            if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 400 ]; then
+              echo "  Body: $BODY"
+            else
+              echo "  Service not ready. Body: $BODY"
               ALL_UP=false
             fi
           done
