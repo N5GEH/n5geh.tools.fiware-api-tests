@@ -40,8 +40,6 @@ jobs:
         run: docker compose logs --tail=50 orion-ld
       - name: Show logs for IoT Agent JSON
         run: docker compose logs --tail=50 iot-agent-json
-      - name: Show logs for IoT Agent UL
-        run: docker compose logs --tail=50 iot-agent-ul
       - name: Show logs for MongoDB
         run: docker compose logs --tail=50 mongo-db
       - name: Show logs for CrateDB
