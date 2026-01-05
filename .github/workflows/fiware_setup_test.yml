@@ -20,12 +20,11 @@ jobs:
         uses: ./.github/actions/fiware
         with:
           fiware-directory: .
-          healthcheck-urls: 'http://localhost:1026/version http://localhost:8668/version http://localhost:1027/version http://localhost:4041/'
-          timeout-seconds: 180
+          healthcheck-urls: 'http://localhost:1026/version http://localhost:8668/version http://localhost:1027/version http://localhost:4041/iot/about'
+          timeout-seconds: 60
           orion-version: '3.11.0'
           mongo-db-version: '5.0.24'
           iot-agent-json-version: '1.26.0'
-          iot-agent-ul-version: '1.23.0'
           quantumleap-version: '1.0.0'
           crate-version: '4.8.4'
           orion-ld-version: '1.5.1'

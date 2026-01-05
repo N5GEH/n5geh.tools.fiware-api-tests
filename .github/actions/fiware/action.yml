@@ -25,10 +25,6 @@ inputs:
     description: 'Version of IoT Agent JSON'
     required: false
     default: '1.26.0'
-  iot-agent-ul-version:
-    description: 'Version of IoT Agent UL'
-    required: false
-    default: '1.23.0'
   quantumleap-version:
     description: 'Version of QuantumLeap'
     required: false
@@ -52,7 +48,6 @@ runs:
         ORION_VERSION: ${{ inputs.orion-version }}
         MONGO_DB_VERSION: ${{ inputs.mongo-db-version }}
         IOT_AGENT_JSON_VERSION: ${{ inputs.iot-agent-json-version }}
-        IOT_AGENT_UL_VERSION: ${{ inputs.iot-agent-ul-version }}
         QUANTUMLEAP_VERSION: ${{ inputs.quantumleap-version }}
         CRATE_VERSION: ${{ inputs.crate-version }}
         ORION_LD_VERSION: ${{ inputs.orion-ld-version }}
@@ -66,6 +61,7 @@ runs:
 
         # Run Docker Compose
         # Docker automatically replaces ${ORION_VERSION} etc. using the 'env' above
+        docker compose config
         echo "Starting Docker Compose..."
         docker compose up -d
 
