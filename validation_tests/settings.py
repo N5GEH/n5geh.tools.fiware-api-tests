@@ -8,7 +8,7 @@ class TestSettings(BaseSettings):
     Settings for the test case scenarios according to pydantic's documentaion
     https://pydantic-docs.helpmanual.io/usage/settings/
     """
-    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
+    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8', extra='ignore')
     LOG_LEVEL: str = Field(default="ERROR",
                            validation_alias=AliasChoices('LOG_LEVEL', 'LOGLEVEL'))
 
