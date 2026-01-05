@@ -66,7 +66,6 @@ x-logging-high: &logging-high # Used by: cratedb, iot-agent-json
       max-file: 5
       max-size: 50m
 services:
-
   orion:
     image: fiware/orion:${{ inputs.orion-version }} # Adaptable version
     hostname: orion
@@ -94,7 +93,6 @@ services:
       - ORION_MUTEX_POLICY=none
       - ORION_CONN_MEMORY=128
     logging: *logging-medium
-
   mongo-db:
     image: mongo:${{ inputs.mongo-db-version }} # Adaptable version
     hostname: mongo-db
@@ -105,7 +103,6 @@ services:
     volumes:
       - mongo-db:/data/db
     logging: *logging-low
-
   iot-agent-json:
     image: fiware/iotagent-json:${{ inputs.iot-agent-json-version }} # Adaptable version
     hostname: iot-agent
@@ -142,7 +139,6 @@ services:
       - IOTA_MQTT_KEEPALIVE=60
       - IOTA_AMQP_DISABLED=true
     logging: *logging-high
-
   iot-agent-ul:
     image: fiware/iotagent-ul:${{ inputs.iot-agent-ul-version }} # Adaptable version
     hostname: iot-agent-ul
@@ -168,7 +164,6 @@ services:
       - IOTA_PROVIDER_URL=http://iot-agent-ul:4061
       - IOTA_MULTI_CORE=true
     logging: *logging-high
-
   mqtt-broker:
     image: eclipse-mosquitto:2.0.11
     hostname: mqtt-broker
@@ -180,7 +175,6 @@ services:
         - fiware
     volumes:
         - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
-
   quantumleap:
     image: orchestracities/quantumleap:${{ inputs.quantumleap-version }} # Adaptable version
     hostname: quantumleap
@@ -202,7 +196,6 @@ services:
       # - REDIS_PORT=6379
       # - CACHE_QUERIES=True
     logging: *logging-low
-
   crate:
     image: crate:${{ inputs.crate-version }} # Adaptable version
     hostname: crate
@@ -218,7 +211,6 @@ services:
       - TZ=Europe/Berlin
       - CRATE_HEAP_SIZE=1g
     logging: *logging-high
-
   orion-ld:
     image: fiware/orion-ld:${{ inputs.orion-ld-version }} # Adaptable version
     hostname: orion-ld
