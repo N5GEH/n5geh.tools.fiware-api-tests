@@ -15,7 +15,6 @@ jobs:
       - name: Setup FIWARE Services
         uses: ./.github/actions/fiware
         with:
-          fiware-directory: .
           healthcheck-urls: 'http://localhost:1026/version http://localhost:8668/version http://localhost:1027/version http://localhost:4041/iot/about'
           timeout-seconds: 60
           orion-version: '3.12.0'

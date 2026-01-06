@@ -1,10 +1,6 @@
 name: 'Setup FIWARE Services'
 description: 'Starts Docker Compose with configurable service versions and waits for services to be ready'
 inputs:
-  fiware-directory:
-    description: 'Path to the directory containing docker-compose.yml'
-    required: false
-    default: '.'
   healthcheck-urls:
     description: 'Space-separated list of URLs to check for health status'
     required: false
@@ -42,7 +38,6 @@ runs:
   steps:
     - name: Start FIWARE Services
       shell: bash
-      working-directory: ${{ inputs.fiware-directory }}
       env:
         # Map inputs to Environment Variables for Docker Compose
         ORION_VERSION: ${{ inputs.orion-version }}
@@ -105,7 +100,6 @@ runs:
         done
 
         echo "Timeout reached ($TIMEOUT s). Services failed to start."
-        cd ${{ inputs.fiware-directory }}
         docker compose ps
         docker compose logs --tail=50
         exit 1
