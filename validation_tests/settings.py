@@ -27,7 +27,9 @@ class TestSettings(BaseSettings):
     QL_URL: AnyHttpUrl = Field(default="http://127.0.0.1:8668",
                                validation_alias=AliasChoices('QUANTUMLEAP_URL',
                                                              'QL_URL'))
-
+    QL_URL_INTERNAL: AnyHttpUrl = Field(default="http://quantumleap:8668",
+                                        validation_alias=AliasChoices('QUANTUMLEAP_URL_INTERNAL',
+                                                                      'QL_URL_INTERNAL'))
     MQTT_BROKER_URL: AnyUrl = Field(default="mqtt://127.0.0.1:1883",
                                     validation_alias=AliasChoices(
                                         'MQTT_BROKER_URL',
@@ -56,3 +58,5 @@ class TestSettings(BaseSettings):
 
 
 settings = TestSettings()
+print("Environment variables loaded:")
+print(settings.model_dump_json(indent=2))
