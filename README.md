@@ -1,4 +1,6 @@
-# Fiware API Tests
+![E.ON EBC RWTH Aachen University](https://raw.githubusercontent.com/RWTH-EBC/FiLiP/master/docs/logos/EBC_Logo.png)
+
+# FIWARE API Tests
 
 - [Test Cases](#test-cases)
 - [Run tests locally](#run-tests-locally)
@@ -93,3 +95,7 @@ This repository provides an example workflow ([`.github/workflows/fiware_api_tes
 This project is a joint development effort between [RWTH-EBC](https://github.com/RWTH-EBC) and [FZJ-ICE1](https://jugit.fz-juelich.de/iek-10/public).
 We gratefully acknowledge the financial support of the Federal Ministry
 for Economic Affairs and Climate Action (BMWK), promotional references 03EN1030B.
+
+<p>
+  <img src="images/BMWE_gefoerdert_en_CMYK.jpg" alt="BMWK funded" width="150"/>
+</p>
