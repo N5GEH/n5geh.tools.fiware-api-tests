@@ -64,6 +64,9 @@ runs:
         docker compose config
         echo "Starting Docker Compose..."
         docker compose up -d
+        
+        # sleep a few seconds to allow containers to initialize
+        sleep 5
 
     - name: Wait for Services to be Ready
       shell: bash
