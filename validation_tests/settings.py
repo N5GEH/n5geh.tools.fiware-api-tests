@@ -8,7 +8,7 @@ class TestSettings(BaseSettings):
     Settings for the test case scenarios according to pydantic's documentaion
     https://pydantic-docs.helpmanual.io/usage/settings/
     """
-    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
+    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8', extra='ignore')
     LOG_LEVEL: str = Field(default="ERROR",
                            validation_alias=AliasChoices('LOG_LEVEL', 'LOGLEVEL'))
 
@@ -27,7 +27,9 @@ class TestSettings(BaseSettings):
     QL_URL: AnyHttpUrl = Field(default="http://127.0.0.1:8668",
                                validation_alias=AliasChoices('QUANTUMLEAP_URL',
                                                              'QL_URL'))
-
+    QL_URL_INTERNAL: AnyHttpUrl = Field(default="http://quantumleap:8668",
+                                        validation_alias=AliasChoices('QUANTUMLEAP_URL_INTERNAL',
+                                                                      'QL_URL_INTERNAL'))
     MQTT_BROKER_URL: AnyUrl = Field(default="mqtt://127.0.0.1:1883",
                                     validation_alias=AliasChoices(
                                         'MQTT_BROKER_URL',
@@ -56,3 +58,5 @@ class TestSettings(BaseSettings):
 
 
 settings = TestSettings()
+print("Environment variables loaded:")
+print(settings.model_dump_json(indent=2))

@@ -1,0 +1,105 @@
+name: 'Setup FIWARE Services'
+description: 'Starts Docker Compose with configurable service versions and waits for services to be ready'
+inputs:
+  healthcheck-urls:
+    description: 'Space-separated list of URLs to check for health status'
+    required: false
+    default: 'http://localhost:1026/version http://localhost:8668/version'
+  timeout-seconds:
+    description: 'How long to wait for services before failing'
+    required: false
+    default: '120'
+  orion-version:
+    description: 'Version of the Orion Context Broker'
+    required: false
+    default: '3.10.0'
+  mongo-db-version:
+    description: 'Version of MongoDB'
+    required: false
+    default: '5.0.24'
+  iot-agent-json-version:
+    description: 'Version of IoT Agent JSON'
+    required: false
+    default: '1.26.0'
+  quantumleap-version:
+    description: 'Version of QuantumLeap'
+    required: false
+    default: '1.0.0'
+  crate-version:
+    description: 'Version of CrateDB'
+    required: false
+    default: '4.8.4'
+  orion-ld-version:
+    description: 'Version of Orion-LD'
+    required: false
+    default: '1.5.1'
+runs:
+  using: "composite"
+  steps:
+    - name: Start FIWARE Services
+      shell: bash
+      env:
+        # Map inputs to Environment Variables for Docker Compose
+        ORION_VERSION: ${{ inputs.orion-version }}
+        MONGO_DB_VERSION: ${{ inputs.mongo-db-version }}
+        IOT_AGENT_JSON_VERSION: ${{ inputs.iot-agent-json-version }}
+        QUANTUMLEAP_VERSION: ${{ inputs.quantumleap-version }}
+        CRATE_VERSION: ${{ inputs.crate-version }}
+        ORION_LD_VERSION: ${{ inputs.orion-ld-version }}
+      run: |
+        # Copy the template from the Action folder to the working directory
+        # ${{ github.action_path }} resolves to the folder where action.yml lives
+        cp "${{ github.action_path }}/docker-compose.yml" docker-compose.yml
+        
+        # Copy the mosquitto configuration file
+        cp "${{ github.action_path }}/mosquitto.conf" mosquitto.conf
+
+        # Run Docker Compose
+        # Docker automatically replaces ${ORION_VERSION} etc. using the 'env' above
+        docker compose config
+        echo "Starting Docker Compose..."
+        docker compose up -d
+        
+        # sleep a few seconds to allow containers to initialize
+        sleep 5
+
+    - name: Wait for Services to be Ready
+      shell: bash
+      run: |
+        URLs="${{ inputs.healthcheck-urls }}"
+        TIMEOUT=${{ inputs.timeout-seconds }}
+        INTERVAL=5
+        ELAPSED=0
+
+        echo "Waiting for the following services: $URLs"
+
+        # Convert space-separated string to array
+        read -ra URL_ADDR <<< "$URLs"
+
+        while [ $ELAPSED -lt $TIMEOUT ]; do
+          ALL_UP=true
+          for url in "${URL_ADDR[@]}"; do
+            # Print the HTTP status and body for each health check
+            echo "" > /tmp/healthcheck_body
+            STATUS=$(curl -s -o /tmp/healthcheck_body -w "%{http_code}" "$url" || echo "000")
+            BODY=$(cat /tmp/healthcheck_body)
+            echo "Healthcheck for $url: HTTP $STATUS"
+            if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 400 ]; then
+              echo "  Body: $BODY"
+            else
+              echo "  Service not ready. Body: $BODY"
+              ALL_UP=false
+            fi
+          done
+          if [ "$ALL_UP" = true ]; then
+            echo "All FIWARE services are up and running!"
+            exit 0
+          fi
+          sleep $INTERVAL
+          ELAPSED=$((ELAPSED + INTERVAL))
+        done
+
+        echo "Timeout reached ($TIMEOUT s). Services failed to start."
+        docker compose ps
+        docker compose logs --tail=50
+        exit 1
