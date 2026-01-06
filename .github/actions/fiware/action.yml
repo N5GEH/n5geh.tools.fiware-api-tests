@@ -82,6 +82,7 @@ runs:
           ALL_UP=true
           for url in "${URL_ADDR[@]}"; do
             # Print the HTTP status and body for each health check
+            echo "" > /tmp/healthcheck_bod
             STATUS=$(curl -s -o /tmp/healthcheck_body -w "%{http_code}" "$url" || echo "000")
             BODY=$(cat /tmp/healthcheck_body)
             echo "Healthcheck for $url: HTTP $STATUS"
