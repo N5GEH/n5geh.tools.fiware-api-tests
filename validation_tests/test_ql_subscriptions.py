@@ -15,7 +15,6 @@ SECOND_PRODUCT_ID = "urn:ngsi-ld:Product:002"
 THIRD_PRODUCT_ID = "urn:ngsi-ld:Product:003"
 
 HEADERS_JSON = {
-    # "Content-Type": "application/json",
     "fiware-service": FIWARE_SERVICE,
     "fiware-servicepath": FIWARE_SERVICEPATH
 }
@@ -31,7 +30,7 @@ def setup_and_teardown():
     r = requests.get(f"{ORION_URL}/v2/entities", headers=HEADERS_JSON)
     assert r.status_code == 200
     for entity in r.json():
-        del_r = requests.delete(f"{ORION_URL}/v2/entities/{entity['id']}", headers={k: v for k, v in HEADERS_JSON.items() if k != "Content-Type"})
+        del_r = requests.delete(f"{ORION_URL}/v2/entities/{entity['id']}", headers=HEADERS_JSON)
         assert del_r.status_code == 204
     time.sleep(3)
 
@@ -39,18 +38,18 @@ def setup_and_teardown():
     r = requests.get(f"{ORION_URL}/v2/subscriptions/", headers=HEADERS_JSON)
     assert r.status_code == 200
     for item in r.json():
-        del_r = requests.delete(f"{ORION_URL}/v2/subscriptions/{item['id']}", headers={k: v for k, v in HEADERS_JSON.items() if k != "Content-Type"})
+        del_r = requests.delete(f"{ORION_URL}/v2/subscriptions/{item['id']}", headers=HEADERS_JSON)
         assert del_r.status_code == 204
     time.sleep(3)
 
     # Clean up any existing records in QuantumLeap
-    r = requests.get(f"{QL_URL}/v2/entities", headers={k: v for k, v in HEADERS_JSON.items() if k != "Content-Type"})
+    r = requests.get(f"{QL_URL}/v2/entities", headers=HEADERS_JSON)
     if r.status_code == 404 and "No records" in r.content.decode():
         pass
     else:
         assert r.status_code == 200
         for entity in r.json():
-            del_r = requests.delete(f"{QL_URL}/v2/entities/{entity['entityId']}", headers={k: v for k, v in HEADERS_JSON.items() if k != "Content-Type"})
+            del_r = requests.delete(f"{QL_URL}/v2/entities/{entity['entityId']}", headers=HEADERS_JSON)
             assert del_r.status_code == 204
 
     # SetUp: Batch Create/Overwrite New Data Entities
@@ -99,20 +98,20 @@ def setup_and_teardown():
             "metadata": ["dateCreated", "dateModified"]
         }
     }
-    r = requests.post(f"{ORION_URL}/v2/subscriptions", headers={k: v for k, v in HEADERS_JSON.items() if k != "Content-Type"}, json=sub_payload)
+    r = requests.post(f"{ORION_URL}/v2/subscriptions", headers=HEADERS_JSON, json=sub_payload)
     assert r.status_code == 201
     yield
     # TearDown: Delete Historical QuantumLeap Data
-    r = requests.delete(f"{QL_URL}/v2/entities/{FIRST_PRODUCT_ID}", headers={k: v for k, v in HEADERS_JSON.items() if k != "Content-Type"})
+    r = requests.delete(f"{QL_URL}/v2/entities/{FIRST_PRODUCT_ID}", headers=HEADERS_JSON)
     assert r.status_code == 204
     time.sleep(3)
-    r = requests.get(f"{QL_URL}/v2/entities/{FIRST_PRODUCT_ID}/attrs/price", headers={k: v for k, v in HEADERS_JSON.items() if k != "Content-Type"})
+    r = requests.get(f"{QL_URL}/v2/entities/{FIRST_PRODUCT_ID}/attrs/price", headers=HEADERS_JSON)
     assert r.status_code == 404 or r.json().get("code") == 404
     # TearDown: Delete Subscriptions
-    r = requests.get(f"{ORION_URL}/v2/subscriptions/", headers={k: v for k, v in HEADERS_JSON.items() if k != "Content-Type"})
+    r = requests.get(f"{ORION_URL}/v2/subscriptions/", headers=HEADERS_JSON)
     assert r.status_code == 200
     for item in r.json():
-        del_r = requests.delete(f"{ORION_URL}/v2/subscriptions/{item['id']}", headers={k: v for k, v in HEADERS_JSON.items() if k != "Content-Type"})
+        del_r = requests.delete(f"{ORION_URL}/v2/subscriptions/{item['id']}", headers=HEADERS_JSON)
         assert del_r.status_code == 204
     # TearDown: Batch Delete Multiple Data Entities
     delete_payload = {
@@ -132,7 +131,7 @@ def setup_and_teardown():
 @pytest.mark.order(1)
 def test_quantumleap_timeseries():
     # retrieving QuantumLeap version
-    r = requests.get(f"{QL_URL}/version", headers={k: v for k, v in HEADERS_JSON.items() if k != "Content-Type"})
+    r = requests.get(f"{QL_URL}/version", headers=HEADERS_JSON)
     assert r.status_code == 200
 
     # retrieve all entities in Orion.
@@ -141,7 +140,7 @@ def test_quantumleap_timeseries():
     assert len(r.json()) == 3
 
     # listing all subscriptions in Orion.
-    r = requests.get(f"{ORION_URL}/v2/subscriptions/", headers={k: v for k, v in HEADERS_JSON.items() if k != "Content-Type"})
+    r = requests.get(f"{ORION_URL}/v2/subscriptions/", headers=HEADERS_JSON)
     assert r.status_code == 200
     assert len(r.json()) == 1
 
@@ -151,7 +150,7 @@ def test_quantumleap_timeseries():
     time.sleep(3)  # wait for QuantumLeap to process the notification
 
     # retrieving timeseries data from QuantumLeap
-    r = requests.get(f"{QL_URL}/v2/entities/{FIRST_PRODUCT_ID}/attrs/price?lastN=3", headers={k: v for k, v in HEADERS_JSON.items() if k != "Content-Type"})
+    r = requests.get(f"{QL_URL}/v2/entities/{FIRST_PRODUCT_ID}/attrs/price?lastN=3", headers=HEADERS_JSON)
     assert r.status_code == 200
     assert "values" in r.json()
     assert len(r.json()["values"]) == 1
