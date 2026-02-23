@@ -67,6 +67,7 @@ services:
     restart: always
     ports:
       - "4041:4041"
+      - "7896:7896"
     networks:
       - fiware
     depends_on:
