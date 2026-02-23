@@ -92,7 +92,7 @@ This repository provides an example workflow ([`.github/workflows/fiware_api_tes
 
 ## Acknowledgements
 
-This project is a joint development effort between [RWTH-EBC](https://github.com/RWTH-EBC) and [FZJ-ICE1](https://jugit.fz-juelich.de/iek-10/public).
+This project is a joint development effort between [RWTH-EBC](https://github.com/RWTH-EBC) and [FZJ-ICE1](https://jugit.fz-juelich.de/iek-10/public/ict-platform).
 We gratefully acknowledge the financial support of the Federal Ministry
 for Economic Affairs and Climate Action (BMWK), promotional references 03EN1030B.
 
